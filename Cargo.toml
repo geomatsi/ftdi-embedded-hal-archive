@@ -1,8 +1,8 @@
 [package]
-name = "rust-um232-tests"
+name = "ftdi-embedded-hal"
 version = "0.1.0"
 authors = ["Sergey Matyukevich <geomatsi@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-ftdi = { path = "/home/matsi/code/rust/ftdi-rs" }
+ftdi = { git = "https://github.com/geomatsi/ftdi-rs" }
