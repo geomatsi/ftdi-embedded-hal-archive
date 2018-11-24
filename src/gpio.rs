@@ -1,22 +1,45 @@
+pub use hal::digital::OutputPin;
+
+use crate::devices::{FtdiDevice, FtdiPinType};
 use crate::mpsse::MPSSECmd;
-use std::io::{Read, Result, Write};
+use std::io::{Read, Write};
 
-pub fn um232_spi_csn(ctx: &mut ftdi::Context, bit: u8, level: u8) -> Result<()> {
-    let mut cmd: Vec<u8> = vec![MPSSECmd::SET_BITS_LOW.into(), 0x0, 0xfb];
-    let mut pins: Vec<u8> = vec![0];
+impl hal::digital::OutputPin for FtdiDevice {
+    fn set_low(&mut self) {
+        let (get_cmd, set_cmd) = match self.pin.bank() {
+            FtdiPinType::Low => (MPSSECmd::GET_BITS_LOW, MPSSECmd::SET_BITS_LOW),
+            FtdiPinType::High => (MPSSECmd::GET_BITS_HIGH, MPSSECmd::SET_BITS_HIGH),
+        };
 
-    ctx.usb_purge_buffers()?;
+        let mut value: Vec<u8> = vec![0];
+        let bit: u8 = self.pin.bit();
 
-    ctx.write_all(&vec![MPSSECmd::GET_BITS_LOW.into()])?;
-    ctx.read_exact(&mut pins)?;
+        self.ctx.usb_purge_buffers().unwrap();
+        self.ctx.write_all(&vec![get_cmd.into()]).unwrap();
+        self.ctx.read_exact(&mut value).unwrap();
 
-    if level > 0 {
-        cmd[1] = pins[0] | bit;
-    } else {
-        cmd[1] = pins[0] & (!bit);
+        self.ctx.usb_purge_buffers().unwrap();
+        self.ctx
+            .write_all(&vec![set_cmd.into(), value[0] & (!bit), 0b1111_1011])
+            .unwrap();
     }
 
-    ctx.write_all(&cmd)?;
+    fn set_high(&mut self) {
+        let (get_cmd, set_cmd) = match self.pin.bank() {
+            FtdiPinType::Low => (MPSSECmd::GET_BITS_LOW, MPSSECmd::SET_BITS_LOW),
+            FtdiPinType::High => (MPSSECmd::GET_BITS_HIGH, MPSSECmd::SET_BITS_HIGH),
+        };
 
-    Ok(())
+        let mut value: Vec<u8> = vec![0];
+        let bit: u8 = self.pin.bit();
+
+        self.ctx.usb_purge_buffers().unwrap();
+        self.ctx.write_all(&vec![get_cmd.into()]).unwrap();
+        self.ctx.read_exact(&mut value).unwrap();
+
+        self.ctx.usb_purge_buffers().unwrap();
+        self.ctx
+            .write_all(&vec![set_cmd.into(), value[0] | bit, 0b1111_1011])
+            .unwrap();
+    }
 }
