@@ -1,5 +1,5 @@
+use crate::mpsse::MPSSECmd;
 use std::io::{Read, Result, Write};
-use crate::devices::MPSSECmd;
 
 pub fn um232_spi_csn(ctx: &mut ftdi::Context, bit: u8, level: u8) -> Result<()> {
     let mut cmd: Vec<u8> = vec![MPSSECmd::SET_BITS_LOW.into(), 0x0, 0xfb];

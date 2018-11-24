@@ -1,105 +1,72 @@
 use ftdi::BitMode;
 use ftdi::FlowControl;
 
+use crate::mpsse::MPSSECmd;
+use crate::mpsse::MPSSECmd_H;
+
+use hal::spi::{MODE_0, Mode};
 use std::io::{Result, Write};
 
-/* MPSSE commands */
-#[allow(non_camel_case_types)]
-pub enum MPSSECmd {
-    SET_BITS_LOW,
-    SET_BITS_HIGH,
-    GET_BITS_LOW,
-    GET_BITS_HIGH,
-    LOOPBACK_START,
-    LOOPBACK_END,
-    TCK_DIVISOR,
+pub struct FtdiDevice {
+    mode: Mode,
+    loopback: bool,
+    pub ctx: ftdi::Context,
 }
 
-impl Into<u8> for MPSSECmd {
-    fn into(self) -> u8 {
-        let cmd = match self {
-            MPSSECmd::SET_BITS_LOW => 0x80,
-            MPSSECmd::SET_BITS_HIGH => 0x82,
-            MPSSECmd::GET_BITS_LOW => 0x81,
-            MPSSECmd::GET_BITS_HIGH => 0x83,
-            MPSSECmd::LOOPBACK_START => 0x84,
-            MPSSECmd::LOOPBACK_END => 0x85,
-            MPSSECmd::TCK_DIVISOR => 0x86,
+impl FtdiDevice {
+    pub fn spi_init(vendor: u16, product: u16, mode: Option<Mode>) -> Result<FtdiDevice> {
+        let mut context = ftdi::Context::new();
+
+        if !context.usb_open(vendor, product).is_ok() {
+            panic!("No FTDI device");
+        }
+
+        context.set_write_chunksize(32);
+        context.set_interface(ftdi::Interface::A)?;
+        context.usb_reset()?;
+        context.set_latency_timer(2)?;
+        context.set_flow_control(FlowControl::SIO_RTS_CTS_HS)?;
+        context.set_bitmode(0, BitMode::MPSSE)?;
+        context.usb_purge_buffers()?;
+
+        // disable loopback
+        context.write_all(&vec![MPSSECmd::LOOPBACK_END.into()])?;
+
+        // init gpio to high
+        context.write_all(&vec![MPSSECmd::SET_BITS_LOW.into(), 0x0, 0xfb])?;
+        context.write_all(&vec![MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0xff])?;
+
+        // set speed
+        context.write_all(&vec![MPSSECmd_H::EN_DIV_5.into()])?;
+        context.write_all(&vec![MPSSECmd::TCK_DIVISOR.into(), 59, 0])?;
+
+        let m = match mode {
+            None => MODE_0,
+            Some(mode) => mode,
         };
 
-        cmd as u8
-    }
-}
-
-/* H Type specific MPSSE commands */
-#[allow(non_camel_case_types)]
-pub enum MPSSECmd_H {
-    DIS_DIV_5,
-    EN_DIV_5,
-    EN_3_PHASE,
-    DIS_3_PHASE,
-    CLK_BITS,
-    CLK_BYTES,
-    CLK_WAIT_HIGH,
-    CLK_WAIT_LOW,
-    EN_ADAPTIVE,
-    DIS_ADAPTIVE,
-    CLK_BYTES_OR_HIGH,
-    CLK_BYTES_OR_LOW,
-}
-
-impl Into<u8> for MPSSECmd_H {
-    fn into(self) -> u8 {
-        let cmd = match self {
-            MPSSECmd_H::DIS_DIV_5 => 0x8a,
-            MPSSECmd_H::EN_DIV_5 => 0x8b,
-            MPSSECmd_H::EN_3_PHASE => 0x8c,
-            MPSSECmd_H::DIS_3_PHASE => 0x8d,
-            MPSSECmd_H::CLK_BITS => 0x8e,
-            MPSSECmd_H::CLK_BYTES => 0x8f,
-            MPSSECmd_H::CLK_WAIT_HIGH => 0x94,
-            MPSSECmd_H::CLK_WAIT_LOW => 0x95,
-            MPSSECmd_H::EN_ADAPTIVE => 0x96,
-            MPSSECmd_H::DIS_ADAPTIVE => 0x97,
-            MPSSECmd_H::CLK_BYTES_OR_HIGH => 0x9c,
-            MPSSECmd_H::CLK_BYTES_OR_LOW => 0x9d,
+        let d = FtdiDevice {
+            mode: m,
+            ctx: context,
+            loopback: false,
         };
 
-        cmd as u8
-    }
-}
-
-pub fn um232_init(vendor: u16, product: u16, loopback: bool) -> Result<ftdi::Context> {
-    let mut context = ftdi::Context::new();
-
-    if !context.usb_open(vendor, product).is_ok() {
-        panic!("No FTDI device");
+        Ok(d)
     }
 
-    context.set_write_chunksize(32);
-    context.set_interface(ftdi::Interface::A)?;
-    context.usb_reset()?;
-    context.set_latency_timer(2)?;
-    context.set_flow_control(FlowControl::SIO_RTS_CTS_HS)?;
-    context.set_bitmode(0, BitMode::MPSSE)?;
-    context.usb_purge_buffers()?;
+    pub fn spi_mode(&mut self, mode: Mode) {
+        self.mode = mode;
+    }
 
-    // init gpio to high
-    context.write_all(&vec![MPSSECmd::SET_BITS_LOW.into(), 0x0, 0xfb])?;
-    context.write_all(&vec![MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0xff])?;
+    pub fn loopback(&mut self, lp: bool) -> Result<()> {
+        self.loopback = lp;
 
-    // configure loopback
-    let cmd = if loopback {
-        MPSSECmd::LOOPBACK_START
-    } else {
-        MPSSECmd::LOOPBACK_END
-    };
+        let cmd = match lp {
+            true => MPSSECmd::LOOPBACK_START,
+            false => MPSSECmd::LOOPBACK_END,
+        };
 
-    context.write_all(&vec![cmd.into()])?;
-
-    // set speed
-    context.write_all(&vec![MPSSECmd_H::EN_DIV_5.into()])?;
-    context.write_all(&vec![MPSSECmd::TCK_DIVISOR.into(), 59, 0])?;
-
-    Ok(context)
+        self.ctx.write_all(&vec![cmd.into()])?;
+        Ok(())
+    }
 }
