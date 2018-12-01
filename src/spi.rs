@@ -1,6 +1,6 @@
 pub use hal::spi::{Mode, Phase, Polarity};
 
-use crate::devices::FtdiDevice;
+use crate::ft232h::FtdiDevice;
 use std::io::{Error, Read, Result, Write};
 
 fn len2cmd(sz: usize) -> (u8, u8) {

@@ -1,6 +1,6 @@
 pub use hal::digital::OutputPin;
 
-use crate::devices::{FtdiDevice, FtdiPinType};
+use crate::ft232h::{FtdiDevice, FtdiPinType};
 use crate::mpsse::MPSSECmd;
 use std::io::{Read, Write};
 
