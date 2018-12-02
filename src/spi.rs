@@ -23,8 +23,16 @@ impl<'a> SpiBus<'a> {
         self.mode = mode;
     }
 
+    pub fn get_mode(self) -> Mode {
+        return self.mode;
+    }
+
     pub fn speed(mut self, speed: u32) {
         self.speed = speed;
+    }
+
+    pub fn get_speed(self) -> u32 {
+        return self.speed;
     }
 }
 

@@ -74,6 +74,10 @@ impl FT232H {
         Ok(())
     }
 
+    pub fn is_loopback(&self) -> bool {
+        return self.loopback
+    }
+
     pub fn spi(&self) -> Result<SpiBus> {
         Ok(SpiBus::new(&self.mtx))
     }
