@@ -90,4 +90,26 @@ mod test {
             assert_eq!(cx, rx);
         }
     }
+
+    #[test]
+    fn test_loopback_multi_bus_t1() {
+        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        dev.loopback(true).unwrap();
+        assert_eq!(dev.is_loopback(), true);
+
+        let mut spidev1 = dev.spi().unwrap();
+        let mut spidev2 = dev.spi().unwrap();
+
+        // loopback: 1-byte messages on both protocol buses
+        for v in 0x0..0xff {
+            let mut tx = [v; 1];
+            let cx = tx.clone();
+
+            let rx = spidev1.transfer(&mut tx).unwrap();
+            assert_eq!(cx, rx);
+
+            let rx = spidev2.transfer(&mut tx).unwrap();
+            assert_eq!(cx, rx);
+        }
+    }
 }
