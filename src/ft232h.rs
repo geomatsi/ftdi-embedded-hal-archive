@@ -75,7 +75,7 @@ impl FT232H {
     }
 
     pub fn is_loopback(&self) -> bool {
-        return self.loopback
+        return self.loopback;
     }
 
     pub fn spi(&self) -> Result<SpiBus> {
