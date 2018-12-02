@@ -1,13 +1,7 @@
 #![feature(extern_crate_item_prelude)]
 
-use std::cell::RefCell;
-use std::io::{Error, Result};
-use std::rc::Rc;
-
-extern crate ftdi_embedded_hal as ftdi_hal;
-use ftdi_hal::devices::{FtdiDevice, FtdiPin};
-
-extern crate embedded_hal as hal;
+extern crate ftdi_embedded_hal as hal;
+use hal::ft232h::FT232H;
 
 extern crate embedded_nrf24l01;
 use embedded_nrf24l01::Configuration;
@@ -15,85 +9,14 @@ use embedded_nrf24l01::CrcMode;
 use embedded_nrf24l01::DataRate;
 use embedded_nrf24l01::NRF24L01;
 
-//
-
-struct CS {
-    ftdi: Rc<RefCell<FtdiDevice>>,
-}
-
-impl CS {
-    pub fn new(ftdi: Rc<RefCell<FtdiDevice>>) -> CS {
-        CS { ftdi: ftdi }
-    }
-}
-
-impl hal::digital::OutputPin for CS {
-    fn set_low(&mut self) {
-        self.ftdi.borrow_mut().select_pin(FtdiPin::PinL2).set_low();
-    }
-
-    fn set_high(&mut self) {
-        self.ftdi.borrow_mut().select_pin(FtdiPin::PinL2).set_high();
-    }
-}
-
-//
-
-struct CE {
-    ftdi: Rc<RefCell<FtdiDevice>>,
-}
-
-impl CE {
-    pub fn new(ftdi: Rc<RefCell<FtdiDevice>>) -> CE {
-        CE { ftdi: ftdi }
-    }
-}
-
-impl hal::digital::OutputPin for CE {
-    fn set_low(&mut self) {
-        self.ftdi.borrow_mut().select_pin(FtdiPin::PinH0).set_low();
-    }
-
-    fn set_high(&mut self) {
-        self.ftdi.borrow_mut().select_pin(FtdiPin::PinH0).set_high();
-    }
-}
-
-//
-
-struct SPI {
-    ftdi: Rc<RefCell<FtdiDevice>>,
-}
-
-impl SPI {
-    pub fn new(ftdi: Rc<RefCell<FtdiDevice>>) -> SPI {
-        SPI { ftdi: ftdi }
-    }
-}
-
-impl hal::blocking::spi::Transfer<u8> for SPI {
-    type Error = Error;
-
-    fn transfer<'b>(&mut self, buffer: &'b mut [u8]) -> Result<&'b [u8]> {
-        self.ftdi.borrow_mut().transfer(buffer)
-    }
-}
-
-//
-
 fn main() {
-    let dev = FtdiDevice::spi_init(0x0403, 0x6014, None).unwrap();
-    let dev_ref = Rc::new(RefCell::new(dev));
-    let proxy1 = Rc::clone(&dev_ref);
-    let proxy2 = Rc::clone(&dev_ref);
-    let proxy3 = Rc::clone(&dev_ref);
-
-    let ce = CE::new(proxy1);
-    let cs = CS::new(proxy2);
-    let spi = SPI::new(proxy3);
+    let dev = FT232H::init(0x0403, 0x6014).unwrap();
+    let spidev = dev.spi().unwrap();
+    let cs = dev.pl2().unwrap();
+    let ce = dev.ph0().unwrap();
 
     // nRF24L01 setup
-    let mut nrf = NRF24L01::new(ce, cs, spi).unwrap();
+    let mut nrf = NRF24L01::new(ce, cs, spidev).unwrap();
     nrf.set_frequency(120).unwrap();
     nrf.set_rf(DataRate::R250Kbps, 3 /* 0 dBm */).unwrap();
     nrf.set_crc(Some(CrcMode::OneByte)).unwrap();

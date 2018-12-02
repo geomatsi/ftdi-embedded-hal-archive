@@ -6,19 +6,20 @@ extern crate ftdi_embedded_hal as hal;
 extern crate rand;
 
 use embedded_hal::blocking::spi::Transfer;
-use hal::devices::FtdiDevice;
+use hal::ft232h::FT232H;
 use rand::Rng;
 
 fn main() {
-    let mut dev = FtdiDevice::spi_init(0x0403, 0x6014, None).unwrap();
-
+    let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
     dev.loopback(true).unwrap();
+
+    let mut spidev = dev.spi().unwrap();
 
     // loopback: 1-byte messages
     for v in 0x0..0xff {
         let mut tx = [v; 1];
         let cx = tx.clone();
-        let rx = dev.transfer(&mut tx).unwrap();
+        let rx = spidev.transfer(&mut tx).unwrap();
 
         assert_eq!(cx, rx);
     }
@@ -27,7 +28,7 @@ fn main() {
     for (x, y, z) in iproduct!(1..5, 11..15, 21..25) {
         let mut tx = [x, y, z];
         let cx = tx.clone();
-        let rx = dev.transfer(&mut tx).unwrap();
+        let rx = spidev.transfer(&mut tx).unwrap();
         assert_eq!(cx, rx);
     }
 
@@ -41,7 +42,7 @@ fn main() {
             })
             .collect();
         let cx = tx.clone();
-        let rx = dev.transfer(&mut tx).unwrap();
+        let rx = spidev.transfer(&mut tx).unwrap();
         assert_eq!(cx, rx);
     }
 
