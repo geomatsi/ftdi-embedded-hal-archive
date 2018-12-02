@@ -9,6 +9,7 @@ extern crate rand;
 
 pub mod ft232h;
 pub mod gpio;
+pub mod i2c;
 pub mod mpsse;
 pub mod spi;
 

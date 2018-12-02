@@ -8,6 +8,7 @@ use crate::mpsse::MPSSECmd_H;
 
 use crate::gpio::GpioPin;
 use crate::gpio::PinBank;
+use crate::i2c::I2cBus;
 use crate::spi::SpiBus;
 
 use std::cell::RefCell;
@@ -80,6 +81,10 @@ impl FT232H {
 
     pub fn spi(&self) -> Result<SpiBus> {
         Ok(SpiBus::new(&self.mtx))
+    }
+
+    pub fn i2c(&self) -> Result<I2cBus> {
+        Ok(I2cBus::new(&self.mtx))
     }
 
     pub fn pl2(&self) -> Result<GpioPin> {
