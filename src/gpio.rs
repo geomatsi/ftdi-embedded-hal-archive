@@ -26,6 +26,10 @@ impl<'a> GpioPin<'a> {
         }
     }
 
+    pub fn get_bit(&self) -> u8 {
+        self.bit
+    }
+
     fn set_pin(&mut self, val: bool) {
         let (get_cmd, set_cmd) = match self.bank {
             PinBank::Low => (MPSSECmd::GET_BITS_LOW, MPSSECmd::SET_BITS_LOW),

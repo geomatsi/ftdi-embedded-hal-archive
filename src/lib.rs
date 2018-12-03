@@ -21,6 +21,7 @@ mod test {
     use embedded_hal::blocking::spi::Transfer;
     use itertools::iproduct;
     use rand::Rng;
+    use std::io::Error;
 
     #[test]
     fn test_init_t1() {
@@ -32,6 +33,29 @@ mod test {
 
         let spidev = dev.spi().unwrap();
         assert_eq!(spidev.get_speed(), 0);
+    }
+
+    #[test]
+    fn test_init_t2() {
+        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        assert_eq!(dev.is_loopback(), false);
+
+        let ph0 = dev.ph0().unwrap();
+        assert_eq!(ph0.get_bit(), 0b0000_0001);
+    }
+
+    #[test]
+    fn test_init_t3() {
+        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        assert_eq!(dev.is_loopback(), false);
+
+        let ph0_0 = dev.ph0();
+        let ph0_1 = dev.ph0();
+        let ph0_2 = dev.ph0();
+
+        assert!(ph0_0.is_ok(), "First pin instance should be OK");
+        assert!(ph0_1.is_err(), "There should be no second pin instance");
+        assert!(ph0_2.is_err(), "There should be no third pin instance");
     }
 
     #[test]
