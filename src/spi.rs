@@ -13,7 +13,7 @@ pub struct SpiBus<'a> {
 impl<'a> SpiBus<'a> {
     pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>) -> SpiBus {
         SpiBus {
-            ctx: ctx,
+            ctx,
             mode: MODE_0,
             speed: 0,
         }
@@ -24,7 +24,7 @@ impl<'a> SpiBus<'a> {
     }
 
     pub fn get_mode(self) -> Mode {
-        return self.mode;
+        self.mode
     }
 
     pub fn speed(mut self, speed: u32) {
@@ -32,7 +32,7 @@ impl<'a> SpiBus<'a> {
     }
 
     pub fn get_speed(self) -> u32 {
-        return self.speed;
+        self.speed
     }
 }
 
@@ -49,7 +49,7 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
     type Error = Error;
 
     fn transfer<'b>(&mut self, buffer: &'b mut [u8]) -> Result<&'b [u8]> {
-        if buffer.len() < 1 {
+        if buffer.is_empty() {
             return Ok(buffer);
         }
 
@@ -61,7 +61,7 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
         let mut ftdi = lock.borrow_mut();
 
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&mut cmd)?;
+        ftdi.write_all(&cmd)?;
         ftdi.read_exact(buffer)?;
 
         Ok(buffer)
@@ -72,7 +72,7 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
     type Error = Error;
 
     fn write(&mut self, buffer: &[u8]) -> Result<()> {
-        if buffer.len() < 1 {
+        if buffer.is_empty() {
             return Ok(());
         }
 
@@ -84,6 +84,6 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
         let mut ftdi = lock.borrow_mut();
 
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&mut cmd)
+        ftdi.write_all(&cmd)
     }
 }

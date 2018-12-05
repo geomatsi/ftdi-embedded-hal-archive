@@ -17,11 +17,7 @@ pub struct GpioPin<'a> {
 
 impl<'a> GpioPin<'a> {
     pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>, bit: u8, bank: PinBank) -> GpioPin {
-        GpioPin {
-            ctx: ctx,
-            bit: bit,
-            bank: bank,
-        }
+        GpioPin { ctx, bit, bank }
     }
 
     pub fn get_bit(&self) -> u8 {
@@ -43,9 +39,10 @@ impl<'a> GpioPin<'a> {
         ftdi.write_all(&vec![get_cmd.into()]).unwrap();
         ftdi.read_exact(&mut value).unwrap();
 
-        let v = match val {
-            false => value[0] & (!self.bit),
-            true => value[0] | self.bit,
+        let v = if val {
+            value[0] | self.bit
+        } else {
+            value[0] & (!self.bit)
         };
 
         ftdi.usb_purge_buffers().unwrap();

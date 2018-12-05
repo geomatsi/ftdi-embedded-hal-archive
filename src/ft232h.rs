@@ -39,7 +39,7 @@ impl FT232H {
     pub fn init(vendor: u16, product: u16) -> Result<FT232H> {
         let mut context = ftdi::Context::new();
 
-        if !context.usb_open(vendor, product).is_ok() {
+        if context.usb_open(vendor, product).is_err() {
             panic!("No FTDI device");
         }
 
@@ -91,9 +91,10 @@ impl FT232H {
     pub fn loopback(&mut self, lp: bool) -> Result<()> {
         self.loopback = lp;
 
-        let cmd = match lp {
-            true => MPSSECmd::LOOPBACK_START,
-            false => MPSSECmd::LOOPBACK_END,
+        let cmd = if lp {
+            MPSSECmd::LOOPBACK_START
+        } else {
+            MPSSECmd::LOOPBACK_END
         };
 
         let lock = self.mtx.lock().unwrap();
@@ -105,7 +106,7 @@ impl FT232H {
     }
 
     pub fn is_loopback(&self) -> bool {
-        return self.loopback;
+        self.loopback
     }
 
     // spi/i2c buses

@@ -10,7 +10,7 @@ pub struct I2cBus<'a> {
 
 impl<'a> I2cBus<'a> {
     pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>) -> I2cBus {
-        I2cBus { ctx: ctx, speed: 0 }
+        I2cBus { ctx, speed: 0 }
     }
 
     pub fn speed(mut self, speed: u32) {
@@ -18,7 +18,7 @@ impl<'a> I2cBus<'a> {
     }
 
     pub fn get_speed(self) -> u32 {
-        return self.speed;
+        self.speed
     }
 }
 
