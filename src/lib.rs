@@ -1,6 +1,4 @@
-#![feature(extern_crate_item_prelude)]
-
-extern crate embedded_hal as hal;
+extern crate embedded_hal;
 extern crate ftdi;
 extern crate nb;
 
@@ -21,7 +19,6 @@ mod test {
     use embedded_hal::blocking::spi::Transfer;
     use itertools::iproduct;
     use rand::Rng;
-    use std::io::Error;
 
     #[test]
     fn test_init_t1() {
@@ -37,7 +34,7 @@ mod test {
 
     #[test]
     fn test_init_t2() {
-        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FT232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
         let ph0 = dev.ph0().unwrap();
@@ -46,7 +43,7 @@ mod test {
 
     #[test]
     fn test_init_t3() {
-        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FT232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
         let ph0_0 = dev.ph0();
@@ -127,14 +124,17 @@ mod test {
 
         // loopback: 1-byte messages on both protocol buses
         for v in 0x0..0xff {
-            let mut tx = [v; 1];
-            let cx = tx.clone();
+            let mut tx1 = [v; 1];
+            let cx1 = tx1.clone();
 
-            let rx = spidev1.transfer(&mut tx).unwrap();
-            assert_eq!(cx, rx);
+            let mut tx2 = [v; 1];
+            let cx2 = tx2.clone();
 
-            let rx = spidev2.transfer(&mut tx).unwrap();
-            assert_eq!(cx, rx);
+            let rx1 = spidev1.transfer(&mut tx1).unwrap();
+            let rx2 = spidev2.transfer(&mut tx2).unwrap();
+
+            assert_eq!(cx1, rx1);
+            assert_eq!(cx2, rx2);
         }
     }
 }

@@ -1,4 +1,4 @@
-pub use hal::spi::{MODE_0, Mode, Phase, Polarity};
+pub use embedded_hal::spi::{MODE_0, Mode, Phase, Polarity};
 
 use std::cell::RefCell;
 use std::io::{Error, Read, Result, Write};
@@ -45,7 +45,7 @@ impl<'a> SpiBus<'a> {
     }
 }
 
-impl<'a> hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
+impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
     type Error = Error;
 
     fn transfer<'b>(&mut self, buffer: &'b mut [u8]) -> Result<&'b [u8]> {
@@ -68,7 +68,7 @@ impl<'a> hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
     }
 }
 
-impl<'a> hal::blocking::spi::Write<u8> for SpiBus<'a> {
+impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
     type Error = Error;
 
     fn write(&mut self, buffer: &[u8]) -> Result<()> {

@@ -1,5 +1,3 @@
-extern crate embedded_hal as hal;
-
 use ftdi::BitMode;
 use ftdi::FlowControl;
 

@@ -1,5 +1,3 @@
-#![feature(extern_crate_item_prelude)]
-
 extern crate ftdi_embedded_hal as hal;
 use hal::ft232h::FT232H;
 

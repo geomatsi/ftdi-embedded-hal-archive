@@ -1,5 +1,3 @@
-pub use hal::digital::OutputPin;
-
 use crate::mpsse::MPSSECmd;
 
 use std::cell::RefCell;
@@ -56,7 +54,7 @@ impl<'a> GpioPin<'a> {
     }
 }
 
-impl<'a> hal::digital::OutputPin for GpioPin<'a> {
+impl<'a> embedded_hal::digital::OutputPin for GpioPin<'a> {
     fn set_low(&mut self) {
         self.set_pin(false);
     }
