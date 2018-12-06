@@ -35,6 +35,19 @@ pub struct FT232H {
     ph7: RefCell<bool>,
 }
 
+macro_rules! DECLARE_GPIO_PIN {
+    ($pin:ident, $bit:expr, $bank: expr) => (
+        pub fn $pin(&self) -> Result<GpioPin> {
+            if !*self.$pin.borrow() {
+                return Err(Error::new(ErrorKind::Other, "pin already in use"));
+            }
+
+            self.$pin.replace(false);
+            Ok(GpioPin::new(&self.mtx, $bit, $bank))
+        }
+    )
+}
+
 impl FT232H {
     pub fn init(vendor: u16, product: u16) -> Result<FT232H> {
         let mut context = ftdi::Context::new();
@@ -121,121 +134,19 @@ impl FT232H {
 
     // gpio pins: low bank
 
-    pub fn pl0(&self) -> Result<GpioPin> {
-        if !*self.pl0.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.pl0.replace(false);
-        Ok(GpioPin::new(&self.mtx, 0b0001_0000, PinBank::Low))
-    }
-
-    pub fn pl1(&self) -> Result<GpioPin> {
-        if !*self.pl1.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.pl1.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0010_0000, PinBank::Low))
-    }
-
-    pub fn pl2(&self) -> Result<GpioPin> {
-        if !*self.pl2.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.pl2.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0100_0000, PinBank::Low))
-    }
-
-    pub fn pl3(&self) -> Result<GpioPin> {
-        if !*self.pl3.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.pl3.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b1000_0000, PinBank::Low))
-    }
+    DECLARE_GPIO_PIN!(pl0, 0b0001_0000, PinBank::Low);
+    DECLARE_GPIO_PIN!(pl1, 0b0010_0000, PinBank::Low);
+    DECLARE_GPIO_PIN!(pl2, 0b0100_0000, PinBank::Low);
+    DECLARE_GPIO_PIN!(pl3, 0b1000_0000, PinBank::Low);
 
     // gpio pins: high bank
 
-    pub fn ph0(&self) -> Result<GpioPin> {
-        if !*self.ph0.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph0.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0000_0001, PinBank::High))
-    }
-
-    pub fn ph1(&self) -> Result<GpioPin> {
-        if !*self.ph1.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph1.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0000_0010, PinBank::High))
-    }
-
-    pub fn ph2(&self) -> Result<GpioPin> {
-        if !*self.ph2.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph2.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0000_0100, PinBank::High))
-    }
-
-    pub fn ph3(&self) -> Result<GpioPin> {
-        if !*self.ph3.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph3.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0000_1000, PinBank::High))
-    }
-    pub fn ph4(&self) -> Result<GpioPin> {
-        if !*self.ph4.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph4.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0001_0000, PinBank::High))
-    }
-    pub fn ph5(&self) -> Result<GpioPin> {
-        if !*self.ph5.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph5.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0010_0000, PinBank::High))
-    }
-    pub fn ph6(&self) -> Result<GpioPin> {
-        if !*self.ph6.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph6.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b0100_0000, PinBank::High))
-    }
-
-    pub fn ph7(&self) -> Result<GpioPin> {
-        if !*self.ph7.borrow() {
-            return Err(Error::new(ErrorKind::Other, "pin already in use"));
-        }
-
-        self.ph7.replace(false);
-
-        Ok(GpioPin::new(&self.mtx, 0b1000_0000, PinBank::High))
-    }
+    DECLARE_GPIO_PIN!(ph0, 0b0000_0001, PinBank::High);
+    DECLARE_GPIO_PIN!(ph1, 0b0000_0010, PinBank::High);
+    DECLARE_GPIO_PIN!(ph2, 0b0000_0100, PinBank::High);
+    DECLARE_GPIO_PIN!(ph3, 0b0000_1000, PinBank::High);
+    DECLARE_GPIO_PIN!(ph4, 0b0001_0000, PinBank::High);
+    DECLARE_GPIO_PIN!(ph5, 0b0010_0000, PinBank::High);
+    DECLARE_GPIO_PIN!(ph6, 0b0100_0000, PinBank::High);
+    DECLARE_GPIO_PIN!(ph7, 0b1000_0000, PinBank::High);
 }
