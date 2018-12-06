@@ -17,11 +17,12 @@ pub mod spi;
 mod test {
     use super::ft232h::FT232H;
     use embedded_hal::blocking::spi::Transfer;
+    use gpio::PinBank;
     use itertools::iproduct;
     use rand::Rng;
 
     #[test]
-    fn test_init_t1() {
+    fn ft232h_test_init_t1() {
         let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
@@ -33,16 +34,65 @@ mod test {
     }
 
     #[test]
-    fn test_init_t2() {
+    fn ft232h_test_init_t2() {
         let dev = FT232H::init(0x0403, 0x6014).unwrap();
-        assert_eq!(dev.is_loopback(), false);
 
-        let ph0 = dev.ph0().unwrap();
-        assert_eq!(ph0.get_bit(), 0b0000_0001);
+        let pl0 = dev.pl0().unwrap();
+        assert_eq!(pl0.get_bit(), 0b0001_0000);
+        assert_eq!(pl0.get_bank(), PinBank::Low);
+
+        let pl1 = dev.pl1().unwrap();
+        assert_eq!(pl1.get_bit(), 0b0010_0000);
+        assert_eq!(pl1.get_bank(), PinBank::Low);
+
+        let pl2 = dev.pl2().unwrap();
+        assert_eq!(pl2.get_bit(), 0b0100_0000);
+        assert_eq!(pl2.get_bank(), PinBank::Low);
+
+        let pl3 = dev.pl3().unwrap();
+        assert_eq!(pl3.get_bit(), 0b1000_0000);
+        assert_eq!(pl3.get_bank(), PinBank::Low);
     }
 
     #[test]
-    fn test_init_t3() {
+    fn ft232h_test_init_t3() {
+        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+
+        let ph0 = dev.ph0().unwrap();
+        assert_eq!(ph0.get_bit(), 0b0000_0001);
+        assert_eq!(ph0.get_bank(), PinBank::High);
+
+        let ph1 = dev.ph1().unwrap();
+        assert_eq!(ph1.get_bit(), 0b0000_0010);
+        assert_eq!(ph1.get_bank(), PinBank::High);
+
+        let ph2 = dev.ph2().unwrap();
+        assert_eq!(ph2.get_bit(), 0b0000_0100);
+        assert_eq!(ph2.get_bank(), PinBank::High);
+
+        let ph3 = dev.ph3().unwrap();
+        assert_eq!(ph3.get_bit(), 0b0000_1000);
+        assert_eq!(ph3.get_bank(), PinBank::High);
+
+        let ph4 = dev.ph4().unwrap();
+        assert_eq!(ph4.get_bit(), 0b0001_0000);
+        assert_eq!(ph4.get_bank(), PinBank::High);
+
+        let ph5 = dev.ph5().unwrap();
+        assert_eq!(ph5.get_bit(), 0b0010_0000);
+        assert_eq!(ph5.get_bank(), PinBank::High);
+
+        let ph6 = dev.ph6().unwrap();
+        assert_eq!(ph6.get_bit(), 0b0100_0000);
+        assert_eq!(ph6.get_bank(), PinBank::High);
+
+        let ph7 = dev.ph7().unwrap();
+        assert_eq!(ph7.get_bit(), 0b1000_0000);
+        assert_eq!(ph7.get_bank(), PinBank::High);
+    }
+
+    #[test]
+    fn ft232h_test_init_t4() {
         let dev = FT232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
@@ -56,7 +106,7 @@ mod test {
     }
 
     #[test]
-    fn test_loopback_t1() {
+    fn ft232h_test_loopback_t1() {
         let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
@@ -74,7 +124,7 @@ mod test {
     }
 
     #[test]
-    fn test_loopback_t2() {
+    fn ft232h_test_loopback_t2() {
         let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
@@ -91,7 +141,7 @@ mod test {
     }
 
     #[test]
-    fn test_loopback_t3() {
+    fn ft232h_test_loopback_t3() {
         let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
@@ -114,7 +164,7 @@ mod test {
     }
 
     #[test]
-    fn test_loopback_multi_bus_t1() {
+    fn ft232h_test_loopback_multi_bus_t1() {
         let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
