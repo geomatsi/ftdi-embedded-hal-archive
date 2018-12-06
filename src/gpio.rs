@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::sync::Mutex;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PinBank {
     Low,
     High,
@@ -22,6 +23,10 @@ impl<'a> GpioPin<'a> {
 
     pub fn get_bit(&self) -> u8 {
         self.bit
+    }
+
+    pub fn get_bank(&self) -> PinBank {
+        self.bank
     }
 
     fn set_pin(&mut self, val: bool) {
@@ -46,8 +51,7 @@ impl<'a> GpioPin<'a> {
         };
 
         ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&[set_cmd.into(), v, 0b1111_1011])
-            .unwrap();
+        ftdi.write_all(&[set_cmd.into(), v, 0b1111_1011]).unwrap();
     }
 }
 
