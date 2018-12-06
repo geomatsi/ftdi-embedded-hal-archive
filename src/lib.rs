@@ -66,7 +66,7 @@ mod test {
         // loopback: 1-byte messages
         for v in 0x0..0xff {
             let mut tx = [v; 1];
-            let cx = tx.clone();
+            let cx = tx;
             let rx = spidev.transfer(&mut tx).unwrap();
 
             assert_eq!(cx, rx);
@@ -84,7 +84,7 @@ mod test {
         // loopback: 3-byte messages
         for (x, y, z) in iproduct!(1..5, 11..15, 21..25) {
             let mut tx = [x, y, z];
-            let cx = tx.clone();
+            let cx = tx;
             let rx = spidev.transfer(&mut tx).unwrap();
             assert_eq!(cx, rx);
         }
@@ -125,10 +125,10 @@ mod test {
         // loopback: 1-byte messages on both protocol buses
         for v in 0x0..0xff {
             let mut tx1 = [v; 1];
-            let cx1 = tx1.clone();
+            let cx1 = tx1;
 
             let mut tx2 = [v; 1];
-            let cx2 = tx2.clone();
+            let cx2 = tx2;
 
             let rx1 = spidev1.transfer(&mut tx1).unwrap();
             let rx2 = spidev2.transfer(&mut tx2).unwrap();

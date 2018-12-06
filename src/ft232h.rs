@@ -52,19 +52,19 @@ impl FT232H {
         context.usb_purge_buffers()?;
 
         // disable loopback
-        context.write_all(&vec![MPSSECmd::LOOPBACK_END.into()])?;
+        context.write_all(&[MPSSECmd::LOOPBACK_END.into()])?;
 
         // set speed
-        context.write_all(&vec![MPSSECmd_H::EN_DIV_5.into()])?;
-        context.write_all(&vec![MPSSECmd::TCK_DIVISOR.into(), 59, 0])?;
+        context.write_all(&[MPSSECmd_H::EN_DIV_5.into()])?;
+        context.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 59, 0])?;
 
         // FIXME: current approach is limited: fixed in/out pin configuration:
         // low bits: DI (0b0100) input, other outputs
         // all outputs initially zeros
-        context.write_all(&vec![MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1011])?;
+        context.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1011])?;
         // high bits: all outputs
         // all outputs initially zeros
-        context.write_all(&vec![MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
+        context.write_all(&[MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
 
         let d = FT232H {
             mtx: Mutex::new(RefCell::new(context)),
@@ -100,7 +100,7 @@ impl FT232H {
         let lock = self.mtx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.write_all(&vec![cmd.into()])?;
+        ftdi.write_all(&[cmd.into()])?;
 
         Ok(())
     }

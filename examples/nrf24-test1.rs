@@ -19,7 +19,7 @@ fn main() {
         pl2.set_low();
 
         // send command: read register r
-        let mut cmd = [0x00 | (0x1F & r); 1];
+        let mut cmd = [0x1F & r; 1];
         spidev.transfer(&mut cmd).unwrap();
 
         // send dummy value: read previous cmd result

@@ -36,7 +36,7 @@ impl<'a> GpioPin<'a> {
         let mut ftdi = lock.borrow_mut();
 
         ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&vec![get_cmd.into()]).unwrap();
+        ftdi.write_all(&[get_cmd.into()]).unwrap();
         ftdi.read_exact(&mut value).unwrap();
 
         let v = if val {
@@ -46,7 +46,7 @@ impl<'a> GpioPin<'a> {
         };
 
         ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&vec![set_cmd.into(), v, 0b1111_1011])
+        ftdi.write_all(&[set_cmd.into(), v, 0b1111_1011])
             .unwrap();
     }
 }
