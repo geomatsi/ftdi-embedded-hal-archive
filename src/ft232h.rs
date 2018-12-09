@@ -150,3 +150,13 @@ impl FT232H {
     DECLARE_GPIO_PIN!(ph6, 0b0100_0000, PinBank::High);
     DECLARE_GPIO_PIN!(ph7, 0b1000_0000, PinBank::High);
 }
+
+impl Drop for FT232H {
+    fn drop(&mut self) {
+        let lock = self.mtx.lock().unwrap();
+        let mut ftdi = lock.borrow_mut();
+
+        ftdi.usb_purge_buffers().unwrap();
+        ftdi.usb_close().unwrap();
+    }
+}
