@@ -1,5 +1,4 @@
 use ftdi::BitMode;
-use ftdi::FlowControl;
 
 use crate::mpsse::MPSSECmd;
 use crate::mpsse::MPSSECmd_H;
@@ -56,11 +55,11 @@ impl FT232H {
             panic!("No FTDI device");
         }
 
-        context.set_write_chunksize(32);
+        context.set_write_chunksize(1024);
+        context.set_read_chunksize(1024);
         context.set_interface(ftdi::Interface::A)?;
         context.usb_reset()?;
-        context.set_latency_timer(2)?;
-        context.set_flow_control(FlowControl::SIO_RTS_CTS_HS)?;
+        context.set_latency_timer(5)?;
         context.set_bitmode(0, BitMode::MPSSE)?;
         context.usb_purge_buffers()?;
 
