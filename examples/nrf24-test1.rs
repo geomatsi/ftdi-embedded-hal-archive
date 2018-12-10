@@ -4,7 +4,7 @@ extern crate embedded_hal;
 use embedded_hal::blocking::spi::Transfer;
 use embedded_hal::digital::OutputPin;
 
-use hal::ft232h::FT232H;
+use crate::hal::ft232h::FT232H;
 
 fn main() {
     let regs: Vec<u8> = vec![0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9];

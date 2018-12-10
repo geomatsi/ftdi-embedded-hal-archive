@@ -16,8 +16,8 @@ pub mod spi;
 #[cfg(test)]
 mod test {
     use super::ft232h::FT232H;
+    use crate::gpio::PinBank;
     use embedded_hal::blocking::spi::Transfer;
-    use gpio::PinBank;
     use itertools::iproduct;
     use rand::Rng;
 

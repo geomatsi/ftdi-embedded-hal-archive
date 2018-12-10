@@ -1,5 +1,5 @@
 extern crate ftdi_embedded_hal as hal;
-use hal::ft232h::FT232H;
+use crate::hal::ft232h::FT232H;
 
 extern crate embedded_nrf24l01;
 use embedded_nrf24l01::Configuration;
