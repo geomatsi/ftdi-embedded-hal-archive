@@ -1,24 +1,43 @@
 /* MPSSE commands */
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum MPSSECmd {
+    MSB_BYTES_RW_CPOL_0_CPHA_0,
+    MSB_BYTES_RW_CPOL_1_CPHA_0,
+    MSB_BYTES_R_CPOL_0_CPHA_0,
+    MSB_BYTES_R_CPOL_1_CPHA_0,
+    MSB_BYTES_W_CPOL_0_CPHA_0,
+    MSB_BYTES_W_CPOL_1_CPHA_0,
+
     SET_BITS_LOW,
     SET_BITS_HIGH,
     GET_BITS_LOW,
     GET_BITS_HIGH,
+
     LOOPBACK_START,
     LOOPBACK_END,
+
     TCK_DIVISOR,
 }
 
 impl Into<u8> for MPSSECmd {
     fn into(self) -> u8 {
         let cmd = match self {
+            MPSSECmd::MSB_BYTES_RW_CPOL_0_CPHA_0 => 0x31,
+            MPSSECmd::MSB_BYTES_RW_CPOL_1_CPHA_0 => 0x32,
+            MPSSECmd::MSB_BYTES_R_CPOL_0_CPHA_0 => 0x20,
+            MPSSECmd::MSB_BYTES_R_CPOL_1_CPHA_0 => 0x24,
+            MPSSECmd::MSB_BYTES_W_CPOL_0_CPHA_0 => 0x11,
+            MPSSECmd::MSB_BYTES_W_CPOL_1_CPHA_0 => 0x10,
+
             MPSSECmd::SET_BITS_LOW => 0x80,
             MPSSECmd::SET_BITS_HIGH => 0x82,
             MPSSECmd::GET_BITS_LOW => 0x81,
             MPSSECmd::GET_BITS_HIGH => 0x83,
+
             MPSSECmd::LOOPBACK_START => 0x84,
             MPSSECmd::LOOPBACK_END => 0x85,
+
             MPSSECmd::TCK_DIVISOR => 0x86,
         };
 
@@ -27,6 +46,7 @@ impl Into<u8> for MPSSECmd {
 }
 
 /* H Type specific MPSSE commands */
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum MPSSECmd_H {
     DIS_DIV_5,

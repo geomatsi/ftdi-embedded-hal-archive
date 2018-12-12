@@ -1,26 +1,47 @@
-pub use embedded_hal::spi::{MODE_0, Mode, Phase, Polarity};
+pub use embedded_hal::spi::{Mode, Phase, Polarity};
+pub use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
+
+use crate::mpsse::MPSSECmd;
 
 use std::cell::RefCell;
-use std::io::{Error, Read, Result, Write};
+use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::sync::Mutex;
 
 pub struct SpiBus<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Context>>,
     mode: Mode,
     speed: u32,
+    cmd_rw: MPSSECmd,
+    cmd_w: MPSSECmd,
 }
 
 impl<'a> SpiBus<'a> {
     pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>) -> SpiBus {
         SpiBus {
             ctx,
-            mode: MODE_0,
             speed: 0,
+            mode: MODE_0,
+            cmd_rw: MPSSECmd::MSB_BYTES_RW_CPOL_0_CPHA_0,
+            cmd_w: MPSSECmd::MSB_BYTES_W_CPOL_0_CPHA_0,
         }
     }
 
-    pub fn set_mode(&mut self, mode: Mode) {
-        self.mode = mode;
+    pub fn set_mode(&mut self, mode: Mode) -> Result<()> {
+        if mode == MODE_0 {
+            self.cmd_rw = MPSSECmd::MSB_BYTES_RW_CPOL_0_CPHA_0;
+            self.cmd_w = MPSSECmd::MSB_BYTES_W_CPOL_0_CPHA_0;
+            self.mode = mode;
+            return Ok(())
+        }
+
+        if mode == MODE_2 {
+            self.cmd_rw = MPSSECmd::MSB_BYTES_RW_CPOL_1_CPHA_0;
+            self.cmd_w = MPSSECmd::MSB_BYTES_W_CPOL_1_CPHA_0;
+            self.mode = mode;
+            return Ok(())
+        }
+
+        Err(Error::new(ErrorKind::NotFound, "mode not supported"))
     }
 
     pub fn get_mode(&mut self) -> Mode {
@@ -54,7 +75,7 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
         }
 
         let (sl, sh) = SpiBus::len2cmd(buffer.len());
-        let mut cmd: Vec<u8> = vec![0x31, sl, sh];
+        let mut cmd: Vec<u8> = vec![self.cmd_rw.into(), sl, sh];
         cmd.append(&mut buffer.to_vec());
 
         let lock = self.ctx.lock().unwrap();
@@ -77,7 +98,7 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
         }
 
         let (sl, sh) = SpiBus::len2cmd(buffer.len());
-        let mut cmd: Vec<u8> = vec![0x20, sl, sh];
+        let mut cmd: Vec<u8> = vec![self.cmd_w.into(), sl, sh];
         cmd.append(&mut buffer.to_vec());
 
         let lock = self.ctx.lock().unwrap();

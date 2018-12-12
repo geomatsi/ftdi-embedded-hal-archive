@@ -18,6 +18,7 @@ mod test {
     use super::ft232h::FT232H;
     use crate::gpio::PinBank;
     use embedded_hal::blocking::spi::Transfer;
+    use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
     use itertools::iproduct;
     use rand::Rng;
 
@@ -108,6 +109,28 @@ mod test {
         assert!(ph0_1.is_err(), "There should be no second pin instance");
         assert!(ph0_2.is_err(), "There should be no third pin instance");
     }
+
+    #[test]
+    fn ft232h_test_init_t5() {
+        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        assert_eq!(dev.is_loopback(), false);
+
+        let mut spidev = dev.spi().unwrap();
+        assert_eq!(spidev.get_speed(), 0);
+
+        let res = spidev.set_mode(MODE_0);
+        assert!(res.is_ok(), "Can't set SPI MODE0");
+
+        let res = spidev.set_mode(MODE_1);
+        assert!(res.is_err(), "SPI MODE1 should not be supported");
+
+        let res = spidev.set_mode(MODE_2);
+        assert!(res.is_ok(), "Can't set SPI MODE2");
+
+        let res = spidev.set_mode(MODE_3);
+        assert!(res.is_err(), "SPI MODE3 should not be supported");
+    }
+
 
     #[test]
     fn ft232h_test_loopback_t1() {
