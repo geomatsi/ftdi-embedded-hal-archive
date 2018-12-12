@@ -19,19 +19,19 @@ impl<'a> SpiBus<'a> {
         }
     }
 
-    pub fn mode(mut self, mode: Mode) {
+    pub fn set_mode(&mut self, mode: Mode) {
         self.mode = mode;
     }
 
-    pub fn get_mode(self) -> Mode {
+    pub fn get_mode(&mut self) -> Mode {
         self.mode
     }
 
-    pub fn speed(mut self, speed: u32) {
+    pub fn set_speed(&mut self, speed: u32) {
         self.speed = speed;
     }
 
-    pub fn get_speed(self) -> u32 {
+    pub fn get_speed(&mut self) -> u32 {
         self.speed
     }
 }

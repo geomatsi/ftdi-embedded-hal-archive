@@ -29,8 +29,12 @@ mod test {
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
 
-        let spidev = dev.spi().unwrap();
+        let mut spidev = dev.spi().unwrap();
         assert_eq!(spidev.get_speed(), 0);
+        spidev.set_speed(100);
+        assert_eq!(spidev.get_speed(), 100);
+        spidev.set_speed(1000);
+        assert_eq!(spidev.get_speed(), 1000);
     }
 
     #[test]
