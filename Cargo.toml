@@ -18,3 +18,4 @@ git = "https://github.com/geomatsi/ftdi-rs"
 
 [dev-dependencies]
 embedded-nrf24l01 = { git = "https://github.com/geomatsi/embedded-nrf24l01", branch = "update-deps" }
+eeprom24x = "0.2.0"
