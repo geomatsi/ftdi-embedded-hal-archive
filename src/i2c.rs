@@ -3,8 +3,6 @@ use crate::mpsse::MPSSECmd;
 use std::cell::RefCell;
 use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::sync::Mutex;
-use std::thread::sleep;
-use std::time::Duration;
 
 pub struct I2cBus<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Context>>,
@@ -38,23 +36,17 @@ impl<'a> I2cBus<'a> {
 
 impl<'a> I2cBus<'a> {
     fn i2c_start(&self, cmd: &mut Vec<u8>, pins: u8) {
-        let delay = Duration::from_micros(5);
-
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
             (pins & 0b1111_1000) | 0b11,
             0b1111_1011,
         ]);
 
-        sleep(delay);
-
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
             (pins & 0b1111_1000) | 0b01,
             0b1111_1011,
         ]);
-
-        sleep(delay);
 
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
@@ -64,23 +56,17 @@ impl<'a> I2cBus<'a> {
     }
 
     fn i2c_stop(&self, cmd: &mut Vec<u8>, pins: u8) {
-        let delay = Duration::from_micros(5);
-
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
             (pins & 0b1111_1000) | 0b01,
             0b1111_1011,
         ]);
 
-        sleep(delay);
-
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
             (pins & 0b1111_1000) | 0b11,
             0b1111_1011,
         ]);
-
-        sleep(delay);
 
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
