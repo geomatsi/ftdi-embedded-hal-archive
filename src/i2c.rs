@@ -104,6 +104,46 @@ impl<'a> I2cBus<'a> {
         // request immediate response from FTDI to host
         cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
     }
+
+    fn i2c_read_byte(&self, cmd: &mut Vec<u8>, nack:bool, pins: u8) {
+        // make sure no occasional SP: SDA output(1), SCL output(0)
+        cmd.append(&mut vec![
+                   MPSSECmd::SET_BITS_LOW.into(),
+                   (pins & 0b1111_1000) | 0b10,
+                   0b1111_1011,
+        ]);
+
+        // prepare to read: SDA input, SCL output(0)
+        cmd.append(&mut vec![
+                   MPSSECmd::SET_BITS_LOW.into(),
+                   (pins & 0b1111_1000) | 0b000,
+                   0b1111_1001,
+        ]);
+
+        // read byte using MPSSE
+        cmd.append(&mut vec![MPSSECmd::MSB_BYTES_R_FALLING.into(), 0x0, 0x0]);
+
+        // prepare SDA for NACK/ACK
+        if nack {
+            cmd.append(&mut vec![
+                       MPSSECmd::SET_BITS_LOW.into(),
+                       (pins & 0b1111_1000) | 0b10,
+                       0b1111_1011,
+            ]);
+        } else {
+            cmd.append(&mut vec![
+                       MPSSECmd::SET_BITS_LOW.into(),
+                       (pins & 0b1111_1000) | 0b00,
+                       0b1111_1011,
+            ]);
+        }
+
+        // NACK/ACK to slave: we pretend we read it
+        cmd.append(&mut vec![MPSSECmd::MSB_BITS_R_RISING.into(), 0x0]);
+
+        // request immediate response from FTDI to PC
+        cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
+    }
 }
 
 impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
@@ -149,44 +189,13 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
             let mut cmd: Vec<u8> = vec![];
             let mut data: Vec<u8> = vec![0, 0];
 
-            // make sure no occasional SP: SDA output(1) SCL output(0)
-            cmd.append(&mut vec![
-                MPSSECmd::SET_BITS_LOW.into(),
-                (pins[0] & 0b1111_1000) | 0b10,
-                0b1111_1011,
-            ]);
-
-            // prepare to read: SDA input, SCL output(0)
-            cmd.append(&mut vec![
-                MPSSECmd::SET_BITS_LOW.into(),
-                (pins[0] & 0b1111_1000) | 0b000,
-                0b1111_1001,
-            ]);
-
-            // read byte using MPSSE
-            cmd.append(&mut vec![MPSSECmd::MSB_BYTES_R_FALLING.into(), 0x0, 0x0]);
-
-            if i == (buffer.len() - 1) {
-                // last byte => NACK to slave: SDA output(1)
-                cmd.append(&mut vec![
-                           MPSSECmd::SET_BITS_LOW.into(),
-                           (pins[0] & 0b1111_1000) | 0b10,
-                           0b1111_1011,
-                ]);
+            let nack:bool = if i == (buffer.len() - 1) {
+                true
             } else {
-                // not last byte => ACK to slave: SDA output(1)
-                cmd.append(&mut vec![
-                           MPSSECmd::SET_BITS_LOW.into(),
-                           (pins[0] & 0b1111_1000) | 0b00,
-                           0b1111_1011,
-                ]);
-            }
+                false
+            };
 
-            // NACK/ACK to slave: line to zero, so we pretend we read it
-            cmd.append(&mut vec![MPSSECmd::MSB_BITS_R_RISING.into(), 0x0]);
-
-            // request immediate response from FTDI to PC
-            cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
+            self.i2c_read_byte(&mut cmd, nack, pins[0]);
 
             ftdi.usb_purge_buffers()?;
             ftdi.write_all(&cmd)?;
@@ -354,44 +363,13 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
             let mut cmd: Vec<u8> = vec![];
             let mut data: Vec<u8> = vec![0, 0];
 
-            // make sure no occasional SP: SDA output(1) SCL output(0)
-            cmd.append(&mut vec![
-                MPSSECmd::SET_BITS_LOW.into(),
-                (pins[0] & 0b1111_1000) | 0b10,
-                0b1111_1011,
-            ]);
-
-            // prepare to read: SDA input, SCL output(0)
-            cmd.append(&mut vec![
-                MPSSECmd::SET_BITS_LOW.into(),
-                (pins[0] & 0b1111_1000) | 0b000,
-                0b1111_1001,
-            ]);
-
-            // read byte using MPSSE
-            cmd.append(&mut vec![MPSSECmd::MSB_BYTES_R_FALLING.into(), 0x0, 0x0]);
-
-            if i == (buffer.len() - 1) {
-                // last byte => NACK to slave: SDA output(1)
-                cmd.append(&mut vec![
-                           MPSSECmd::SET_BITS_LOW.into(),
-                           (pins[0] & 0b1111_1000) | 0b10,
-                           0b1111_1011,
-                ]);
+            let nack:bool = if i == (buffer.len() - 1) {
+                true
             } else {
-                // not last byte => ACK to slave: SDA output(1)
-                cmd.append(&mut vec![
-                           MPSSECmd::SET_BITS_LOW.into(),
-                           (pins[0] & 0b1111_1000) | 0b00,
-                           0b1111_1011,
-                ]);
-            }
+                false
+            };
 
-            // NACK/ACK to slave: line to zero, so we pretend we read it
-            cmd.append(&mut vec![MPSSECmd::MSB_BITS_R_RISING.into(), 0x0]);
-
-            // request immediate response from FTDI to PC
-            cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
+            self.i2c_read_byte(&mut cmd, nack, pins[0]);
 
             ftdi.usb_purge_buffers()?;
             ftdi.write_all(&cmd)?;
