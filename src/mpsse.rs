@@ -9,6 +9,14 @@ pub enum MPSSECmd {
     MSB_BYTES_W_CPOL_0_CPHA_0,
     MSB_BYTES_W_CPOL_1_CPHA_0,
 
+    MSB_BYTES_W_FALLING,
+    MSB_BYTES_R_FALLING,
+
+    MSB_BITS_W_RISING,
+    MSB_BITS_W_FALLING,
+    MSB_BITS_R_RISING,
+    MSB_BITS_R_FALLING,
+
     SET_BITS_LOW,
     SET_BITS_HIGH,
     GET_BITS_LOW,
@@ -18,6 +26,8 @@ pub enum MPSSECmd {
     LOOPBACK_END,
 
     TCK_DIVISOR,
+
+    SEND_BACK_NOW,
 }
 
 impl Into<u8> for MPSSECmd {
@@ -30,6 +40,14 @@ impl Into<u8> for MPSSECmd {
             MPSSECmd::MSB_BYTES_W_CPOL_0_CPHA_0 => 0x11,
             MPSSECmd::MSB_BYTES_W_CPOL_1_CPHA_0 => 0x10,
 
+            MPSSECmd::MSB_BYTES_W_FALLING => 0x11,
+            MPSSECmd::MSB_BYTES_R_FALLING => 0x24,
+
+            MPSSECmd::MSB_BITS_W_RISING => 0x12,
+            MPSSECmd::MSB_BITS_W_FALLING => 0x13,
+            MPSSECmd::MSB_BITS_R_RISING => 0x22,
+            MPSSECmd::MSB_BITS_R_FALLING => 0x26,
+
             MPSSECmd::SET_BITS_LOW => 0x80,
             MPSSECmd::SET_BITS_HIGH => 0x82,
             MPSSECmd::GET_BITS_LOW => 0x81,
@@ -39,6 +57,8 @@ impl Into<u8> for MPSSECmd {
             MPSSECmd::LOOPBACK_END => 0x85,
 
             MPSSECmd::TCK_DIVISOR => 0x86,
+
+            MPSSECmd::SEND_BACK_NOW => 0x87,
         };
 
         cmd as u8

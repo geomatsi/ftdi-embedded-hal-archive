@@ -66,14 +66,27 @@ impl FT232H {
         // disable loopback
         context.write_all(&[MPSSECmd::LOOPBACK_END.into()])?;
 
-        // set speed
-        context.write_all(&[MPSSECmd_H::EN_DIV_5.into()])?;
-        context.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 59, 0])?;
+        //// FIXME: set speed 1MHz
+        //// calculate values for TCK divisor for each proto (i2c/spi)
+        //// according to global div settings and per-proto speed settings,
+        //// pass those values to proto backends, they will setup speed for each transactions (???)
+        //context.write_all(&[MPSSECmd_H::EN_DIV_5.into()])?;
+        //context.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 59, 0])?;
+
+        //// FIXME: set speed 400KHz
+        //// calculate values for TCK divisor for each proto (i2c/spi)
+        //// according to global div settings and per-proto speed settings,
+        //// pass those values to proto backends, they will setup speed for each transactions (???)
+        context.write_all(&[MPSSECmd_H::DIS_DIV_5.into()])?;
+        context.write_all(&[MPSSECmd_H::DIS_ADAPTIVE.into()])?;
+        context.write_all(&[MPSSECmd_H::DIS_3_PHASE.into()])?;
+        // SCL freq = 60MHz / ((1 + 0x4a)*2) = 400KHz
+        context.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 0x4a, 0x00])?;
 
         // FIXME: current approach is limited: fixed in/out pin configuration:
         // low bits: DI (0b0100) input, other outputs
         // all outputs initially zeros
-        context.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1011])?;
+        context.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1000])?;
         // high bits: all outputs
         // all outputs initially zeros
         context.write_all(&[MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
