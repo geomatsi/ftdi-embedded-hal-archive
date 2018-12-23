@@ -138,9 +138,9 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         let mut cmd: Vec<u8> = vec![];
 
         // get current state of low pins
-        ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()]).unwrap();
-        ftdi.read_exact(&mut pins).unwrap();
+        ftdi.usb_purge_buffers()?;
+        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()])?;
+        ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
         self.i2c_start(&mut cmd, pins[0]);
@@ -239,9 +239,9 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         let mut cmd: Vec<u8> = vec![];
 
         // get current state of low pins
-        ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()]).unwrap();
-        ftdi.read_exact(&mut pins).unwrap();
+        ftdi.usb_purge_buffers()?;
+        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()])?;
+        ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
         self.i2c_start(&mut cmd, pins[0]);
@@ -307,9 +307,9 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         let mut cmd: Vec<u8> = vec![];
 
         // get current state of low pins
-        ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()]).unwrap();
-        ftdi.read_exact(&mut pins).unwrap();
+        ftdi.usb_purge_buffers()?;
+        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()])?;
+        ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
         self.i2c_start(&mut cmd, pins[0]);
