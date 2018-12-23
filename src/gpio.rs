@@ -30,9 +30,13 @@ impl<'a> GpioPin<'a> {
     }
 
     fn set_pin(&mut self, val: bool) {
-        let (get_cmd, set_cmd) = match self.bank {
-            PinBank::Low => (MPSSECmd::GET_BITS_LOW, MPSSECmd::SET_BITS_LOW),
-            PinBank::High => (MPSSECmd::GET_BITS_HIGH, MPSSECmd::SET_BITS_HIGH),
+        let (get_cmd, set_cmd, dir) = match self.bank {
+            PinBank::Low => (MPSSECmd::GET_BITS_LOW, MPSSECmd::SET_BITS_LOW, 0b1111_1011),
+            PinBank::High => (
+                MPSSECmd::GET_BITS_HIGH,
+                MPSSECmd::SET_BITS_HIGH,
+                0b1111_1111,
+            ),
         };
 
         let mut value: Vec<u8> = vec![0];
@@ -51,7 +55,7 @@ impl<'a> GpioPin<'a> {
         };
 
         ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&[set_cmd.into(), v, 0b1111_1011]).unwrap();
+        ftdi.write_all(&[set_cmd.into(), v, dir]).unwrap();
     }
 }
 
