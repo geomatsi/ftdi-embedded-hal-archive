@@ -27,9 +27,8 @@ impl<'a> I2cBus<'a> {
 }
 
 impl<'a> I2cBus<'a> {
-    fn i2c_start(&self, pins: u8) -> Vec<u8> {
+    fn i2c_start(&self, cmd: &mut Vec<u8>, pins: u8) {
         let delay = Duration::from_micros(5);
-        let mut cmd: Vec<u8> = vec![];
 
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
@@ -52,13 +51,10 @@ impl<'a> I2cBus<'a> {
             (pins & 0b1111_1000) | 0b00,
             0b1111_1011,
         ]);
-
-        cmd
     }
 
-    fn i2c_stop(&self, pins: u8) -> Vec<u8> {
+    fn i2c_stop(&self, cmd: &mut Vec<u8>, pins: u8) {
         let delay = Duration::from_micros(5);
-        let mut cmd: Vec<u8> = vec![];
 
         cmd.append(&mut vec![
             MPSSECmd::SET_BITS_LOW.into(),
@@ -81,8 +77,6 @@ impl<'a> I2cBus<'a> {
             (pins & 0b1111_1100) | 0b00,
             0b1111_1000,
         ]);
-
-        cmd
     }
 }
 
@@ -106,11 +100,13 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()]).unwrap();
         ftdi.read_exact(&mut pins).unwrap();
 
+        let mut cmd: Vec<u8> = vec![];
+
         //
         // ST: send using bit-banging
         //
 
-        let mut cmd: Vec<u8> = self.i2c_start(pins[0]);
+        self.i2c_start(&mut cmd, pins[0]);
 
         //
         // SAD + R: send using MPSSE
@@ -198,7 +194,9 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         // SP: send using bit-banging
         //
 
-        let cmd: Vec<u8> = self.i2c_stop(pins[0]);
+        let mut cmd: Vec<u8> = vec![];
+
+        self.i2c_stop(&mut cmd, pins[0]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)?;
@@ -234,11 +232,13 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         ftdi.write_all(&cmd)?;
         ftdi.read_exact(&mut pins).unwrap();
 
+        let mut cmd: Vec<u8> = vec![];
+
         //
         // ST: send using bit-banging
         //
 
-        let mut cmd: Vec<u8> = self.i2c_start(pins[0]);
+        self.i2c_start(&mut cmd, pins[0]);
 
         //
         // SAD + W: send using MPSSE
@@ -326,7 +326,9 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         // SP: send using bit-banging
         //
 
-        let cmd: Vec<u8> = self.i2c_stop(pins[0]);
+        let mut cmd: Vec<u8> = vec![];
+
+        self.i2c_stop(&mut cmd, pins[0]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)?;
@@ -363,11 +365,13 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         ftdi.write_all(&cmd).unwrap();
         ftdi.read_exact(&mut pins).unwrap();
 
+        let mut cmd: Vec<u8> = vec![];
+
         //
         // ST: send using bit-banging
         //
 
-        let mut cmd: Vec<u8> = self.i2c_start(pins[0]);
+        self.i2c_start(&mut cmd, pins[0]);
 
         //
         // SAD + W: send using MPSSE
@@ -465,7 +469,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         // SR: send using bit-banging
         //
 
-        cmd.append(&mut self.i2c_start(pins[0]));
+        self.i2c_start(&mut cmd, pins[0]);
 
         //
         // SAD + R: send using MPSSE
@@ -560,7 +564,9 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         // SP: send using bit-banging
         //
 
-        let cmd: Vec<u8> = self.i2c_stop(pins[0]);
+        let mut cmd: Vec<u8> = vec![];
+
+        self.i2c_stop(&mut cmd, pins[0]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)?;
