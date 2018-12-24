@@ -75,11 +75,14 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
         }
 
         let (sl, sh) = SpiBus::len2cmd(buffer.len());
-        let mut cmd: Vec<u8> = vec![self.cmd_rw.into(), sl, sh];
-        cmd.append(&mut buffer.to_vec());
+        let mut cmd: Vec<u8> = vec![];
 
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
+
+        cmd.append(&mut vec![self.cmd_rw.into(), sl, sh]);
+        cmd.append(&mut buffer.to_vec());
+        cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)?;
@@ -98,11 +101,14 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
         }
 
         let (sl, sh) = SpiBus::len2cmd(buffer.len());
-        let mut cmd: Vec<u8> = vec![self.cmd_w.into(), sl, sh];
-        cmd.append(&mut buffer.to_vec());
+        let mut cmd: Vec<u8> = vec![];
 
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
+
+        cmd.append(&mut vec![self.cmd_w.into(), sl, sh]);
+        cmd.append(&mut buffer.to_vec());
+        cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)
