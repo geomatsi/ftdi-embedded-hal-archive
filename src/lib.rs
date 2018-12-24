@@ -131,6 +131,35 @@ mod test {
         assert!(res.is_err(), "SPI MODE3 should not be supported");
     }
 
+    #[test]
+    fn ft232h_test_init_t6() {
+        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        assert_eq!(dev.is_loopback(), false);
+
+        let spi1 = dev.spi();
+        assert!(spi1.is_ok(), "1st spi instance should be ok");
+
+        let i2c = dev.i2c();
+        assert!(i2c.is_err(), "i2c instance after spi should not be ok");
+
+        let spi2 = dev.spi();
+        assert!(spi2.is_ok(), "2st spi instance should be ok");
+    }
+
+    #[test]
+    fn ft232h_test_init_t7() {
+        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        assert_eq!(dev.is_loopback(), false);
+
+        let i2c1 = dev.i2c();
+        assert!(i2c1.is_ok(), "1st i2c instance should be ok");
+
+        let spi = dev.spi();
+        assert!(spi.is_err(), "spi instance after i2c should not be ok");
+
+        let i2c2 = dev.i2c();
+        assert!(i2c2.is_ok(), "2st i2c instance should be ok");
+    }
 
     #[test]
     fn ft232h_test_loopback_t1() {

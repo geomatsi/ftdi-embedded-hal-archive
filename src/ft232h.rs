@@ -19,6 +19,9 @@ pub struct FT232H {
     mtx: Mutex<RefCell<ftdi::Context>>,
     loopback: bool,
 
+    i2c: RefCell<bool>,
+    spi: RefCell<bool>,
+
     pl0: RefCell<bool>,
     pl1: RefCell<bool>,
     pl2: RefCell<bool>,
@@ -34,7 +37,7 @@ pub struct FT232H {
     ph7: RefCell<bool>,
 }
 
-macro_rules! DECLARE_GPIO_PIN {
+macro_rules! declare_gpio_pin {
     ($pin:ident, $bit:expr, $bank: expr) => (
         pub fn $pin(&self) -> Result<GpioPin> {
             if !*self.$pin.borrow() {
@@ -63,37 +66,31 @@ impl FT232H {
         context.set_bitmode(0, BitMode::MPSSE)?;
         context.usb_purge_buffers()?;
 
-        // disable loopback
-        context.write_all(&[MPSSECmd::LOOPBACK_END.into()])?;
-
-        //// FIXME: set speed 1MHz
-        //// calculate values for TCK divisor for each proto (i2c/spi)
-        //// according to global div settings and per-proto speed settings,
-        //// pass those values to proto backends, they will setup speed for each transactions (???)
-        //context.write_all(&[MPSSECmd_H::EN_DIV_5.into()])?;
-        //context.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 59, 0])?;
-
-        //// FIXME: set speed 400KHz
-        //// calculate values for TCK divisor for each proto (i2c/spi)
-        //// according to global div settings and per-proto speed settings,
-        //// pass those values to proto backends, they will setup speed for each transactions (???)
+        // clock settings:
+        // - disable DIV_5 => 60MHz
+        // - disable adaptive clocking
+        // - disable 3-phase clocking
         context.write_all(&[MPSSECmd_H::DIS_DIV_5.into()])?;
         context.write_all(&[MPSSECmd_H::DIS_ADAPTIVE.into()])?;
         context.write_all(&[MPSSECmd_H::DIS_3_PHASE.into()])?;
-        // SCL freq = 60MHz / ((1 + 0x4a)*2) = 400KHz
-        context.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 0x4a, 0x00])?;
+
+        // disable loopback
+        context.write_all(&[MPSSECmd::LOOPBACK_END.into()])?;
 
         // FIXME: current approach is limited: fixed in/out pin configuration:
-        // low bits: DI (0b0100) input, other outputs
-        // all outputs initially zeros
-        context.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1000])?;
-        // high bits: all outputs
-        // all outputs initially zeros
+        // - low bits: all outputs(0)
+        context.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1111])?;
+
+        // FIXME: current approach is limited: fixed in/out pin configuration:
+        // - high bits: all outputs(0)
         context.write_all(&[MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
 
         let d = FT232H {
             mtx: Mutex::new(RefCell::new(context)),
             loopback: false,
+
+            i2c: RefCell::new(true),
+            spi: RefCell::new(true),
 
             pl0: RefCell::new(true),
             pl1: RefCell::new(true),
@@ -137,30 +134,64 @@ impl FT232H {
     // spi/i2c buses
 
     pub fn spi(&self) -> Result<SpiBus> {
+        if !*self.i2c.borrow() {
+            return Err(Error::new(ErrorKind::Other, "can't use spi: i2c is active"));
+        }
+
+        if *self.spi.borrow() {
+            let lock = self.mtx.lock().unwrap();
+            let mut ftdi = lock.borrow_mut();
+
+            self.spi.replace(false);
+
+            // SPI: DI - input, DO - output(0), SK - output(0)
+            ftdi.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1011])?;
+
+            // FIXME: set fixed speed 1MHz for all devices assuming 60MHz clock
+            // SCK_freq = 60MHz / ((1 + 0x1d) * 2) = 1MHz
+            ftdi.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 0x1d, 0])?;
+        }
+
         Ok(SpiBus::new(&self.mtx))
     }
 
     pub fn i2c(&self) -> Result<I2cBus> {
+        if !*self.spi.borrow() {
+            return Err(Error::new(ErrorKind::Other, "can't use i2c: spi is active"));
+        }
+
+        if *self.i2c.borrow() {
+            let lock = self.mtx.lock().unwrap();
+            let mut ftdi = lock.borrow_mut();
+
+            self.i2c.replace(false);
+
+            // I2C: DI - input, DO - output(0), SK - output(0)
+            ftdi.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1011])?;
+
+            // FIXME: set fixed speed 100KHz for all i2c devices assuming 60MHz clock
+            // SCL_freq = 60MHz / ((1 + 0x12b) * 2) = 100KHz
+            ftdi.write_all(&[MPSSECmd::TCK_DIVISOR.into(), 0x2b, 0x01])?;
+        }
+
         Ok(I2cBus::new(&self.mtx))
     }
 
     // gpio pins: low bank
-
-    DECLARE_GPIO_PIN!(pl0, 0b0001_0000, PinBank::Low);
-    DECLARE_GPIO_PIN!(pl1, 0b0010_0000, PinBank::Low);
-    DECLARE_GPIO_PIN!(pl2, 0b0100_0000, PinBank::Low);
-    DECLARE_GPIO_PIN!(pl3, 0b1000_0000, PinBank::Low);
+    declare_gpio_pin!(pl0, 0b0001_0000, PinBank::Low);
+    declare_gpio_pin!(pl1, 0b0010_0000, PinBank::Low);
+    declare_gpio_pin!(pl2, 0b0100_0000, PinBank::Low);
+    declare_gpio_pin!(pl3, 0b1000_0000, PinBank::Low);
 
     // gpio pins: high bank
-
-    DECLARE_GPIO_PIN!(ph0, 0b0000_0001, PinBank::High);
-    DECLARE_GPIO_PIN!(ph1, 0b0000_0010, PinBank::High);
-    DECLARE_GPIO_PIN!(ph2, 0b0000_0100, PinBank::High);
-    DECLARE_GPIO_PIN!(ph3, 0b0000_1000, PinBank::High);
-    DECLARE_GPIO_PIN!(ph4, 0b0001_0000, PinBank::High);
-    DECLARE_GPIO_PIN!(ph5, 0b0010_0000, PinBank::High);
-    DECLARE_GPIO_PIN!(ph6, 0b0100_0000, PinBank::High);
-    DECLARE_GPIO_PIN!(ph7, 0b1000_0000, PinBank::High);
+    declare_gpio_pin!(ph0, 0b0000_0001, PinBank::High);
+    declare_gpio_pin!(ph1, 0b0000_0010, PinBank::High);
+    declare_gpio_pin!(ph2, 0b0000_0100, PinBank::High);
+    declare_gpio_pin!(ph3, 0b0000_1000, PinBank::High);
+    declare_gpio_pin!(ph4, 0b0001_0000, PinBank::High);
+    declare_gpio_pin!(ph5, 0b0010_0000, PinBank::High);
+    declare_gpio_pin!(ph6, 0b0100_0000, PinBank::High);
+    declare_gpio_pin!(ph7, 0b1000_0000, PinBank::High);
 }
 
 impl Drop for FT232H {
