@@ -70,12 +70,12 @@ impl FT232H {
         // - disable DIV_5 => 60MHz
         // - disable adaptive clocking
         // - disable 3-phase clocking
-        context.write_all(&[MPSSECmd_H::DIS_DIV_5.into()])?;
-        context.write_all(&[MPSSECmd_H::DIS_ADAPTIVE.into()])?;
-        context.write_all(&[MPSSECmd_H::DIS_3_PHASE.into()])?;
+        context.write_all(&[MPSSECmd_H::DISABLE_DIV_5_CLK.into()])?;
+        context.write_all(&[MPSSECmd_H::DISABLE_ADAPTIVE_CLK.into()])?;
+        context.write_all(&[MPSSECmd_H::DISABLE_3_PHASE_CLK.into()])?;
 
         // disable loopback
-        context.write_all(&[MPSSECmd::LOOPBACK_END.into()])?;
+        context.write_all(&[MPSSECmd::LOOPBACK_DISABLE.into()])?;
 
         // FIXME: current approach is limited: fixed in/out pin configuration:
         // - low bits: all outputs(0)
@@ -114,9 +114,9 @@ impl FT232H {
         self.loopback = lp;
 
         let cmd = if lp {
-            MPSSECmd::LOOPBACK_START
+            MPSSECmd::LOOPBACK_ENABLE
         } else {
-            MPSSECmd::LOOPBACK_END
+            MPSSECmd::LOOPBACK_DISABLE
         };
 
         let lock = self.mtx.lock().unwrap();

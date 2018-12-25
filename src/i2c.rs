@@ -85,7 +85,7 @@ impl<'a> I2cBus<'a> {
 
         // send single byte using MPSSE
         cmd.append(&mut vec![
-            MPSSECmd::MSB_BYTES_W_FALLING.into(),
+            MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT.into(),
             0x0,
             0x0,
             byte,
@@ -99,10 +99,10 @@ impl<'a> I2cBus<'a> {
         ]);
 
         // SAK: recv using MPSSE
-        cmd.append(&mut vec![MPSSECmd::MSB_BITS_R_RISING.into(), 0x0]);
+        cmd.append(&mut vec![MPSSECmd::MSB_RISING_EDGE_CLK_BIT_IN.into(), 0x0]);
 
         // request immediate response from FTDI to host
-        cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
+        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
     }
 
     fn i2c_read_byte(&self, cmd: &mut Vec<u8>, nack:bool, pins: u8) {
@@ -121,7 +121,7 @@ impl<'a> I2cBus<'a> {
         ]);
 
         // read byte using MPSSE
-        cmd.append(&mut vec![MPSSECmd::MSB_BYTES_R_FALLING.into(), 0x0, 0x0]);
+        cmd.append(&mut vec![MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_IN.into(), 0x0, 0x0]);
 
         // prepare SDA for NACK/ACK
         if nack {
@@ -139,10 +139,10 @@ impl<'a> I2cBus<'a> {
         }
 
         // NACK/ACK to slave: we pretend we read it
-        cmd.append(&mut vec![MPSSECmd::MSB_BITS_R_RISING.into(), 0x0]);
+        cmd.append(&mut vec![MPSSECmd::MSB_RISING_EDGE_CLK_BIT_IN.into(), 0x0]);
 
         // request immediate response from FTDI to PC
-        cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
+        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
     }
 }
 
@@ -165,7 +165,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
 
         // get current state of low pins
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()])?;
+        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_IMMEDIATE_RESP.into()])?;
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
@@ -235,7 +235,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
         // get current state of low pins
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()])?;
+        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_IMMEDIATE_RESP.into()])?;
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
@@ -303,7 +303,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // get current state of low pins
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_BACK_NOW.into()])?;
+        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_IMMEDIATE_RESP.into()])?;
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging

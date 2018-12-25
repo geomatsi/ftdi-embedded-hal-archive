@@ -11,8 +11,8 @@ pub struct SpiBus<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Context>>,
     mode: Mode,
     speed: u32,
-    cmd_rw: MPSSECmd,
     cmd_w: MPSSECmd,
+    cmd_r: MPSSECmd,
 }
 
 impl<'a> SpiBus<'a> {
@@ -21,22 +21,22 @@ impl<'a> SpiBus<'a> {
             ctx,
             speed: 0,
             mode: MODE_0,
-            cmd_rw: MPSSECmd::MSB_BYTES_RW_CPOL_0_CPHA_0,
-            cmd_w: MPSSECmd::MSB_BYTES_W_CPOL_0_CPHA_0,
+            cmd_r: MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_IN,
+            cmd_w: MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT,
         }
     }
 
     pub fn set_mode(&mut self, mode: Mode) -> Result<()> {
         if mode == MODE_0 {
-            self.cmd_rw = MPSSECmd::MSB_BYTES_RW_CPOL_0_CPHA_0;
-            self.cmd_w = MPSSECmd::MSB_BYTES_W_CPOL_0_CPHA_0;
+            self.cmd_r = MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_IN;
+            self.cmd_w = MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT;
             self.mode = mode;
             return Ok(())
         }
 
         if mode == MODE_2 {
-            self.cmd_rw = MPSSECmd::MSB_BYTES_RW_CPOL_1_CPHA_0;
-            self.cmd_w = MPSSECmd::MSB_BYTES_W_CPOL_1_CPHA_0;
+            self.cmd_r = MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_IN;
+            self.cmd_w = MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_OUT;
             self.mode = mode;
             return Ok(())
         }
@@ -64,6 +64,12 @@ impl<'a> SpiBus<'a> {
 
         (sl, sh)
     }
+
+    fn cmd_rw(&self) -> u8 {
+        let a: u8 = self.cmd_r.into();
+        let b: u8 = self.cmd_w.into();
+        a | b
+    }
 }
 
 impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
@@ -80,9 +86,9 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        cmd.append(&mut vec![self.cmd_rw.into(), sl, sh]);
+        cmd.append(&mut vec![self.cmd_rw(), sl, sh]);
         cmd.append(&mut buffer.to_vec());
-        cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
+        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)?;
@@ -108,7 +114,7 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
 
         cmd.append(&mut vec![self.cmd_w.into(), sl, sh]);
         cmd.append(&mut buffer.to_vec());
-        cmd.append(&mut vec![MPSSECmd::SEND_BACK_NOW.into()]);
+        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)
