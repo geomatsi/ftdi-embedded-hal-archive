@@ -15,6 +15,7 @@ version = "0.2.2"
 
 [dependencies.ftdi]
 git = "https://github.com/geomatsi/ftdi-rs"
+branch = "wip-add-more-wrappers"
 
 [dev-dependencies]
 embedded-nrf24l01 = { git = "https://github.com/geomatsi/embedded-nrf24l01", branch = "update-deps" }
