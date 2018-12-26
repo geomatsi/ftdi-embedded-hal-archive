@@ -1,3 +1,5 @@
+#![allow(clippy::identity_op)]
+
 use crate::mpsse::MPSSECmd;
 
 use std::cell::RefCell;
@@ -188,12 +190,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         for i in 0..buffer.len() {
             let mut cmd: Vec<u8> = vec![];
             let mut data: Vec<u8> = vec![0, 0];
-
-            let nack:bool = if i == (buffer.len() - 1) {
-                true
-            } else {
-                false
-            };
+            let nack:bool = i == (buffer.len() - 1);
 
             self.i2c_read_byte(&mut cmd, nack, pins[0]);
 
@@ -255,10 +252,10 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         }
 
         // WRITE bytes to slave
-        for i in 0..bytes.len() {
+        for byte in bytes {
             let mut cmd: Vec<u8> = vec![];
 
-            self.i2c_write_byte_ack(&mut cmd, bytes[i], pins[0]);
+            self.i2c_write_byte_ack(&mut cmd, *byte, pins[0]);
 
             // send command and read back one bit
             ftdi.usb_purge_buffers()?;
@@ -323,10 +320,10 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         }
 
         // WRITE bytes to slave
-        for i in 0..bytes.len() {
+        for byte in bytes {
             let mut cmd: Vec<u8> = vec![];
 
-            self.i2c_write_byte_ack(&mut cmd, bytes[i], pins[0]);
+            self.i2c_write_byte_ack(&mut cmd, *byte, pins[0]);
 
             // send command and read back one bit
             ftdi.usb_purge_buffers()?;
@@ -362,12 +359,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         for i in 0..buffer.len() {
             let mut cmd: Vec<u8> = vec![];
             let mut data: Vec<u8> = vec![0, 0];
-
-            let nack:bool = if i == (buffer.len() - 1) {
-                true
-            } else {
-                false
-            };
+            let nack:bool = i == (buffer.len() - 1);
 
             self.i2c_read_byte(&mut cmd, nack, pins[0]);
 
