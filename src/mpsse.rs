@@ -73,7 +73,7 @@ impl Into<u8> for MPSSECmd_H {
     fn into(self) -> u8 {
         let cmd = match self {
             MPSSECmd_H::DISABLE_DIV_5_CLK => 0x8a,
-            MPSSECmd_H::ENABLE_DIV_5_CLK  => 0x8b,
+            MPSSECmd_H::ENABLE_DIV_5_CLK => 0x8b,
             MPSSECmd_H::ENABLE_3_PHASE_CLK => 0x8c,
             MPSSECmd_H::DISABLE_3_PHASE_CLK => 0x8d,
             MPSSECmd_H::CLK_BITS => 0x8e,

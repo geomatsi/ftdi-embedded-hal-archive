@@ -31,14 +31,14 @@ impl<'a> SpiBus<'a> {
             self.cmd_r = MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_IN;
             self.cmd_w = MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT;
             self.mode = mode;
-            return Ok(())
+            return Ok(());
         }
 
         if mode == MODE_2 {
             self.cmd_r = MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_IN;
             self.cmd_w = MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_OUT;
             self.mode = mode;
-            return Ok(())
+            return Ok(());
         }
 
         Err(Error::new(ErrorKind::NotFound, "mode not supported"))

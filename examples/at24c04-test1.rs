@@ -1,5 +1,5 @@
-extern crate ftdi_embedded_hal as hal;
 extern crate eeprom24x;
+extern crate ftdi_embedded_hal as hal;
 
 fn main() {
     println!("Run example tests: cargo test --example=at24c04-test1 -- --test-threads=1");

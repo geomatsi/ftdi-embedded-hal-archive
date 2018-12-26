@@ -23,7 +23,6 @@ impl<'a> I2cBus<'a> {
     pub fn get_speed(self) -> u32 {
         self.speed
     }
-
 }
 
 impl<'a> I2cBus<'a> {
@@ -77,12 +76,12 @@ impl<'a> I2cBus<'a> {
         ]);
     }
 
-    fn i2c_write_byte_ack(&self, cmd: &mut Vec<u8>, byte:u8, pins: u8) {
+    fn i2c_write_byte_ack(&self, cmd: &mut Vec<u8>, byte: u8, pins: u8) {
         // make sure no occasional SP: SDA output(1) SCL output(0)
         cmd.append(&mut vec![
-                   MPSSECmd::SET_BITS_LOW.into(),
-                   (pins & 0b1111_1000) | 0b10,
-                   0b1111_1011,
+            MPSSECmd::SET_BITS_LOW.into(),
+            (pins & 0b1111_1000) | 0b10,
+            0b1111_1011,
         ]);
 
         // send single byte using MPSSE
@@ -107,36 +106,40 @@ impl<'a> I2cBus<'a> {
         cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
     }
 
-    fn i2c_read_byte(&self, cmd: &mut Vec<u8>, nack:bool, pins: u8) {
+    fn i2c_read_byte(&self, cmd: &mut Vec<u8>, nack: bool, pins: u8) {
         // make sure no occasional SP: SDA output(1), SCL output(0)
         cmd.append(&mut vec![
-                   MPSSECmd::SET_BITS_LOW.into(),
-                   (pins & 0b1111_1000) | 0b10,
-                   0b1111_1011,
+            MPSSECmd::SET_BITS_LOW.into(),
+            (pins & 0b1111_1000) | 0b10,
+            0b1111_1011,
         ]);
 
         // prepare to read: SDA input, SCL output(0)
         cmd.append(&mut vec![
-                   MPSSECmd::SET_BITS_LOW.into(),
-                   (pins & 0b1111_1000) | 0b000,
-                   0b1111_1001,
+            MPSSECmd::SET_BITS_LOW.into(),
+            (pins & 0b1111_1000) | 0b000,
+            0b1111_1001,
         ]);
 
         // read byte using MPSSE
-        cmd.append(&mut vec![MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_IN.into(), 0x0, 0x0]);
+        cmd.append(&mut vec![
+            MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_IN.into(),
+            0x0,
+            0x0,
+        ]);
 
         // prepare SDA for NACK/ACK
         if nack {
             cmd.append(&mut vec![
-                       MPSSECmd::SET_BITS_LOW.into(),
-                       (pins & 0b1111_1000) | 0b10,
-                       0b1111_1011,
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1000) | 0b10,
+                0b1111_1011,
             ]);
         } else {
             cmd.append(&mut vec![
-                       MPSSECmd::SET_BITS_LOW.into(),
-                       (pins & 0b1111_1000) | 0b00,
-                       0b1111_1011,
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1000) | 0b00,
+                0b1111_1011,
             ]);
         }
 
@@ -152,8 +155,6 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
     type Error = Error;
 
     fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<()> {
-        println!("READ {} bytes from addr[{:b}]", buffer.len(), address);
-
         if buffer.is_empty() {
             return Ok(());
         }
@@ -167,7 +168,10 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
 
         // get current state of low pins
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_IMMEDIATE_RESP.into()])?;
+        ftdi.write_all(&[
+            MPSSECmd::GET_BITS_LOW.into(),
+            MPSSECmd::SEND_IMMEDIATE_RESP.into(),
+        ])?;
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
@@ -183,14 +187,14 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"))
+            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
         }
 
         // READ bytes from slave
         for i in 0..buffer.len() {
             let mut cmd: Vec<u8> = vec![];
             let mut data: Vec<u8> = vec![0, 0];
-            let nack:bool = i == (buffer.len() - 1);
+            let nack: bool = i == (buffer.len() - 1);
 
             self.i2c_read_byte(&mut cmd, nack, pins[0]);
 
@@ -217,8 +221,6 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
     type Error = Error;
 
     fn write(&mut self, address: u8, bytes: &[u8]) -> Result<()> {
-        println!("WRITE {} bytes to addr[{:b}]", bytes.len(), address);
-
         if bytes.is_empty() {
             return Ok(());
         }
@@ -232,7 +234,10 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
         // get current state of low pins
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_IMMEDIATE_RESP.into()])?;
+        ftdi.write_all(&[
+            MPSSECmd::GET_BITS_LOW.into(),
+            MPSSECmd::SEND_IMMEDIATE_RESP.into(),
+        ])?;
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
@@ -248,7 +253,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"))
+            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
         }
 
         // WRITE bytes to slave
@@ -264,7 +269,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
-                return Err(Error::new(ErrorKind::Other, "No ACK from slave"))
+                return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
             }
         }
 
@@ -284,11 +289,12 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
     type Error = Error;
 
     fn write_read(&mut self, address: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<()> {
-        println!("WRITE_READ[{:b}]: write {} bytes read {} bytes", address, bytes.len(), buffer.len());
-
         // FIXME: simplified: do not fallback to Read or Write, just throw error
         if bytes.is_empty() || buffer.is_empty() {
-            return Err(Error::new(ErrorKind::InvalidData, "Empty input or output buffer"))
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "Empty input or output buffer",
+            ));
         }
 
         let lock = self.ctx.lock().unwrap();
@@ -300,7 +306,10 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // get current state of low pins
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&[MPSSECmd::GET_BITS_LOW.into(), MPSSECmd::SEND_IMMEDIATE_RESP.into()])?;
+        ftdi.write_all(&[
+            MPSSECmd::GET_BITS_LOW.into(),
+            MPSSECmd::SEND_IMMEDIATE_RESP.into(),
+        ])?;
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
@@ -316,7 +325,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"))
+            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
         }
 
         // WRITE bytes to slave
@@ -332,7 +341,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
-                return Err(Error::new(ErrorKind::Other, "No ACK from slave"))
+                return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
             }
         }
 
@@ -352,14 +361,14 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"))
+            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
         }
 
         // READ bytes from slave
         for i in 0..buffer.len() {
             let mut cmd: Vec<u8> = vec![];
             let mut data: Vec<u8> = vec![0, 0];
-            let nack:bool = i == (buffer.len() - 1);
+            let nack: bool = i == (buffer.len() - 1);
 
             self.i2c_read_byte(&mut cmd, nack, pins[0]);
 
