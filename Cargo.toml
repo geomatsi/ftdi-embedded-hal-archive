@@ -20,3 +20,4 @@ branch = "wip-add-more-wrappers"
 [dev-dependencies]
 embedded-nrf24l01 = { git = "https://github.com/geomatsi/embedded-nrf24l01", branch = "update-deps" }
 eeprom24x = "0.2.0"
+lm75 = "0.1.1"
