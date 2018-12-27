@@ -37,43 +37,55 @@ impl<'a> I2cBus<'a> {
 
 impl<'a> I2cBus<'a> {
     fn i2c_start(&self, cmd: &mut Vec<u8>, pins: u8) {
-        cmd.append(&mut vec![
-            MPSSECmd::SET_BITS_LOW.into(),
-            (pins & 0b1111_1000) | 0b11,
-            0b1111_1011,
-        ]);
+        for _ in 0..4 {
+            cmd.append(&mut vec![
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1000) | 0b11,
+                0b1111_1011,
+            ]);
+        }
 
-        cmd.append(&mut vec![
-            MPSSECmd::SET_BITS_LOW.into(),
-            (pins & 0b1111_1000) | 0b01,
-            0b1111_1011,
-        ]);
+        for _ in 0..4 {
+            cmd.append(&mut vec![
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1000) | 0b01,
+                0b1111_1011,
+            ]);
+        }
 
-        cmd.append(&mut vec![
-            MPSSECmd::SET_BITS_LOW.into(),
-            (pins & 0b1111_1000) | 0b00,
-            0b1111_1011,
-        ]);
+        for _ in 0..4 {
+            cmd.append(&mut vec![
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1000) | 0b00,
+                0b1111_1011,
+            ]);
+        }
     }
 
     fn i2c_stop(&self, cmd: &mut Vec<u8>, pins: u8) {
-        cmd.append(&mut vec![
-            MPSSECmd::SET_BITS_LOW.into(),
-            (pins & 0b1111_1000) | 0b01,
-            0b1111_1011,
-        ]);
+        for _ in 0..4 {
+            cmd.append(&mut vec![
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1000) | 0b01,
+                0b1111_1011,
+            ]);
+        }
 
-        cmd.append(&mut vec![
-            MPSSECmd::SET_BITS_LOW.into(),
-            (pins & 0b1111_1000) | 0b11,
-            0b1111_1011,
-        ]);
+        for _ in 0..4 {
+            cmd.append(&mut vec![
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1000) | 0b11,
+                0b1111_1011,
+            ]);
+        }
 
-        cmd.append(&mut vec![
-            MPSSECmd::SET_BITS_LOW.into(),
-            (pins & 0b1111_1100) | 0b00,
-            0b1111_1000,
-        ]);
+        for _ in 0..4 {
+            cmd.append(&mut vec![
+                MPSSECmd::SET_BITS_LOW.into(),
+                (pins & 0b1111_1100) | 0b00,
+                0b1111_1000,
+            ]);
+        }
     }
 
     fn i2c_write_byte_ack(&self, cmd: &mut Vec<u8>, byte: u8, pins: u8) {
