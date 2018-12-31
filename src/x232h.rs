@@ -1,4 +1,5 @@
 use ftdi::BitMode;
+pub use ftdi::Interface;
 
 use crate::mpsse::MPSSECmd;
 use crate::mpsse::MPSSECmd_H;
@@ -39,6 +40,14 @@ pub struct FTx232H {
 
 impl FTx232H {
     pub fn init(vendor: u16, product: u16) -> Result<FTx232H> {
+        FTx232H::init_ctx(vendor, product, ftdi::Interface::A)
+    }
+
+    pub fn init_chan(vendor: u16, product: u16, intf: ftdi::Interface) -> Result<FTx232H> {
+        FTx232H::init_ctx(vendor, product, intf)
+    }
+
+    fn init_ctx(vendor: u16, product: u16, intf: ftdi::Interface) -> Result<FTx232H> {
         let mut context = ftdi::Context::new();
 
         context.set_interface(intf)?;
