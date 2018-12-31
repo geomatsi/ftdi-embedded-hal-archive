@@ -1,5 +1,5 @@
 extern crate ftdi_embedded_hal as hal;
-use crate::hal::ft232h::FT232H;
+use crate::hal::x232h::FTx232H;
 
 extern crate embedded_nrf24l01;
 use embedded_nrf24l01::Configuration;
@@ -8,7 +8,7 @@ use embedded_nrf24l01::DataRate;
 use embedded_nrf24l01::NRF24L01;
 
 fn main() {
-    let dev = FT232H::init(0x0403, 0x6014).unwrap();
+    let dev = FTx232H::init(0x0403, 0x6014).unwrap();
     let spidev = dev.spi().unwrap();
     let cs = dev.pl2().unwrap();
     let ce = dev.ph0().unwrap();

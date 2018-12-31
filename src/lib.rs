@@ -5,7 +5,7 @@ extern crate nb;
 extern crate itertools;
 extern crate rand;
 
-pub mod ft232h;
+pub mod x232h;
 pub mod gpio;
 pub mod i2c;
 pub mod mpsse;
@@ -15,7 +15,7 @@ pub mod spi;
 
 #[cfg(test)]
 mod test {
-    use super::ft232h::FT232H;
+    use super::x232h::FTx232H;
     use crate::gpio::PinBank;
     use embedded_hal::blocking::spi::Transfer;
     use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
@@ -24,7 +24,7 @@ mod test {
 
     #[test]
     fn ft232h_test_init_t1() {
-        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let mut dev = FTx232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
         dev.loopback(true).unwrap();
@@ -40,7 +40,7 @@ mod test {
 
     #[test]
     fn ft232h_test_init_t2() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
 
         let pl0 = dev.pl0().unwrap();
         assert_eq!(pl0.get_bit(), 0b0001_0000);
@@ -61,7 +61,7 @@ mod test {
 
     #[test]
     fn ft232h_test_init_t3() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
 
         let ph0 = dev.ph0().unwrap();
         assert_eq!(ph0.get_bit(), 0b0000_0001);
@@ -98,7 +98,7 @@ mod test {
 
     #[test]
     fn ft232h_test_init_t4() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
         let ph0_0 = dev.ph0();
@@ -112,7 +112,7 @@ mod test {
 
     #[test]
     fn ft232h_test_init_t5() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
         let mut spidev = dev.spi().unwrap();
@@ -133,7 +133,7 @@ mod test {
 
     #[test]
     fn ft232h_test_init_t6() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
         let spi1 = dev.spi();
@@ -148,7 +148,7 @@ mod test {
 
     #[test]
     fn ft232h_test_init_t7() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
         assert_eq!(dev.is_loopback(), false);
 
         let i2c1 = dev.i2c();
@@ -163,7 +163,7 @@ mod test {
 
     #[test]
     fn ft232h_test_loopback_t1() {
-        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let mut dev = FTx232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
 
@@ -181,7 +181,7 @@ mod test {
 
     #[test]
     fn ft232h_test_loopback_t2() {
-        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let mut dev = FTx232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
 
@@ -198,7 +198,7 @@ mod test {
 
     #[test]
     fn ft232h_test_loopback_t3() {
-        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let mut dev = FTx232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
 
@@ -221,7 +221,7 @@ mod test {
 
     #[test]
     fn ft232h_test_loopback_multi_bus_t1() {
-        let mut dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let mut dev = FTx232H::init(0x0403, 0x6014).unwrap();
         dev.loopback(true).unwrap();
         assert_eq!(dev.is_loopback(), true);
 

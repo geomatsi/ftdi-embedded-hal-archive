@@ -7,7 +7,7 @@ fn main() {
 
 #[cfg(test)]
 mod test {
-    use crate::hal::ft232h::FT232H;
+    use crate::hal::x232h::FTx232H;
 
     use eeprom24x::Eeprom24x;
     use eeprom24x::SlaveAddr;
@@ -17,7 +17,7 @@ mod test {
 
     #[test]
     fn at24x_test_t1() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
         let i2c = dev.i2c().unwrap();
         let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
 
@@ -35,7 +35,7 @@ mod test {
 
     #[test]
     fn at24x_test_t2() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
         let i2c = dev.i2c().unwrap();
         let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
 
@@ -57,7 +57,7 @@ mod test {
 
     #[test]
     fn at24x_test_t3() {
-        let dev = FT232H::init(0x0403, 0x6014).unwrap();
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
         let i2c = dev.i2c().unwrap();
         let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
 

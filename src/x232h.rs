@@ -15,7 +15,7 @@ use std::io::Result;
 use std::io::Write;
 use std::sync::Mutex;
 
-pub struct FT232H {
+pub struct FTx232H {
     mtx: Mutex<RefCell<ftdi::Context>>,
     loopback: bool,
 
@@ -37,9 +37,11 @@ pub struct FT232H {
     ph7: RefCell<bool>,
 }
 
-impl FT232H {
-    pub fn init(vendor: u16, product: u16) -> Result<FT232H> {
+impl FTx232H {
+    pub fn init(vendor: u16, product: u16) -> Result<FTx232H> {
         let mut context = ftdi::Context::new();
+
+        context.set_interface(intf)?;
 
         if context.usb_open(vendor, product).is_err() {
             panic!("No FTDI device");
@@ -47,7 +49,6 @@ impl FT232H {
 
         context.set_write_chunksize(1024);
         context.set_read_chunksize(1024);
-        context.set_interface(ftdi::Interface::A)?;
         context.usb_reset()?;
         context.set_latency_timer(5)?;
         context.set_bitmode(0, BitMode::MPSSE)?;
@@ -72,7 +73,7 @@ impl FT232H {
         // - high bits: all outputs(0)
         context.write_all(&[MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
 
-        let d = FT232H {
+        let d = FTx232H {
             mtx: Mutex::new(RefCell::new(context)),
             loopback: false,
 
@@ -181,7 +182,7 @@ impl FT232H {
     crate::declare_gpio_pin!(ph7, 0b1000_0000, PinBank::High);
 }
 
-impl Drop for FT232H {
+impl Drop for FTx232H {
     fn drop(&mut self) {
         let lock = self.mtx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
