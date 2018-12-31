@@ -10,6 +10,20 @@ pub enum PinBank {
     High,
 }
 
+#[macro_export]
+macro_rules! declare_gpio_pin {
+    ($pin:ident, $bit:expr, $bank: expr) => (
+        pub fn $pin(&self) -> Result<GpioPin> {
+            if !*self.$pin.borrow() {
+                return Err(Error::new(ErrorKind::Other, "pin already in use"));
+            }
+
+            self.$pin.replace(false);
+            Ok(GpioPin::new(&self.mtx, $bit, $bank))
+        }
+    )
+}
+
 pub struct GpioPin<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Context>>,
     bank: PinBank,

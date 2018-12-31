@@ -37,19 +37,6 @@ pub struct FT232H {
     ph7: RefCell<bool>,
 }
 
-macro_rules! declare_gpio_pin {
-    ($pin:ident, $bit:expr, $bank: expr) => (
-        pub fn $pin(&self) -> Result<GpioPin> {
-            if !*self.$pin.borrow() {
-                return Err(Error::new(ErrorKind::Other, "pin already in use"));
-            }
-
-            self.$pin.replace(false);
-            Ok(GpioPin::new(&self.mtx, $bit, $bank))
-        }
-    )
-}
-
 impl FT232H {
     pub fn init(vendor: u16, product: u16) -> Result<FT232H> {
         let mut context = ftdi::Context::new();
@@ -178,20 +165,20 @@ impl FT232H {
     }
 
     // gpio pins: low bank
-    declare_gpio_pin!(pl0, 0b0001_0000, PinBank::Low);
-    declare_gpio_pin!(pl1, 0b0010_0000, PinBank::Low);
-    declare_gpio_pin!(pl2, 0b0100_0000, PinBank::Low);
-    declare_gpio_pin!(pl3, 0b1000_0000, PinBank::Low);
+    crate::declare_gpio_pin!(pl0, 0b0001_0000, PinBank::Low);
+    crate::declare_gpio_pin!(pl1, 0b0010_0000, PinBank::Low);
+    crate::declare_gpio_pin!(pl2, 0b0100_0000, PinBank::Low);
+    crate::declare_gpio_pin!(pl3, 0b1000_0000, PinBank::Low);
 
     // gpio pins: high bank
-    declare_gpio_pin!(ph0, 0b0000_0001, PinBank::High);
-    declare_gpio_pin!(ph1, 0b0000_0010, PinBank::High);
-    declare_gpio_pin!(ph2, 0b0000_0100, PinBank::High);
-    declare_gpio_pin!(ph3, 0b0000_1000, PinBank::High);
-    declare_gpio_pin!(ph4, 0b0001_0000, PinBank::High);
-    declare_gpio_pin!(ph5, 0b0010_0000, PinBank::High);
-    declare_gpio_pin!(ph6, 0b0100_0000, PinBank::High);
-    declare_gpio_pin!(ph7, 0b1000_0000, PinBank::High);
+    crate::declare_gpio_pin!(ph0, 0b0000_0001, PinBank::High);
+    crate::declare_gpio_pin!(ph1, 0b0000_0010, PinBank::High);
+    crate::declare_gpio_pin!(ph2, 0b0000_0100, PinBank::High);
+    crate::declare_gpio_pin!(ph3, 0b0000_1000, PinBank::High);
+    crate::declare_gpio_pin!(ph4, 0b0001_0000, PinBank::High);
+    crate::declare_gpio_pin!(ph5, 0b0010_0000, PinBank::High);
+    crate::declare_gpio_pin!(ph6, 0b0100_0000, PinBank::High);
+    crate::declare_gpio_pin!(ph7, 0b1000_0000, PinBank::High);
 }
 
 impl Drop for FT232H {
