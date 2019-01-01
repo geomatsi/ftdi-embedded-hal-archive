@@ -74,4 +74,23 @@ mod test {
 
         assert_eq!(data_w, data_r);
     }
+
+    #[test]
+    fn at24x_test_t4() {
+        let dev = FTx232H::init(0x0403, 0x6014).unwrap();
+        let i2c = dev.i2c().unwrap();
+        let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
+
+        let delay = Duration::from_millis(50);
+        let addrs: [u8; 4] = [0x00, 0x10, 0x20, 0x30];
+        let mut data_r = [0x00; 16];
+        let data_w = [0xAB; 16];
+
+        for addr in addrs.iter() {
+            eeprom.write_page(*addr, &data_w).unwrap();
+            sleep(delay);
+            eeprom.read_data(*addr, &mut data_r).unwrap();
+            assert_eq!(data_w, data_r);
+        }
+    }
 }
