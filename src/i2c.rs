@@ -6,22 +6,21 @@ use std::cell::RefCell;
 use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::sync::Mutex;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[allow(non_camel_case_types)]
+pub enum I2cSpeed {
+    CLK_AUTO,
+    CLK_100kHz,
+    CLK_400kHz,
+}
+
 pub struct I2cBus<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Context>>,
-    speed: u32,
 }
 
 impl<'a> I2cBus<'a> {
     pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>) -> I2cBus {
-        I2cBus { ctx, speed: 0 }
-    }
-
-    pub fn set_speed(mut self, speed: u32) {
-        self.speed = speed;
-    }
-
-    pub fn get_speed(self) -> u32 {
-        self.speed
+        I2cBus { ctx }
     }
 }
 

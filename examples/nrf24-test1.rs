@@ -10,7 +10,7 @@ fn main() {
     let regs: Vec<u8> = vec![0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9];
 
     let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-    let mut spidev = dev.spi().unwrap();
+    let mut spidev = dev.spi(hal::spi::SpiSpeed::CLK_1MHz).unwrap();
     let mut pl2 = dev.pl2().unwrap();
 
     // This example refers to specific schematics:

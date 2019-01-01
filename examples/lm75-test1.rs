@@ -9,8 +9,8 @@ use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
-    let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-    let i2c = dev.i2c().unwrap();
+    let dev = FTx232H::init(0x0403, 0x6010).unwrap();
+    let i2c = dev.i2c(hal::i2c::I2cSpeed::CLK_400kHz).unwrap();
     let mut sensor = Lm75::new(i2c, SlaveAddr::default());
     let delay = Duration::from_secs(1);
 

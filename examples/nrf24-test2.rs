@@ -9,7 +9,7 @@ use embedded_nrf24l01::NRF24L01;
 
 fn main() {
     let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-    let spidev = dev.spi().unwrap();
+    let spidev = dev.spi(hal::spi::SpiSpeed::CLK_1MHz).unwrap();
     let cs = dev.pl2().unwrap();
     let ce = dev.ph0().unwrap();
 

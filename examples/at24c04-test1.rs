@@ -18,7 +18,7 @@ mod test {
     #[test]
     fn at24x_test_t1() {
         let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-        let i2c = dev.i2c().unwrap();
+        let i2c = dev.i2c(hal::i2c::I2cSpeed::CLK_400kHz).unwrap();
         let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
 
         let delay = Duration::from_millis(5);
@@ -36,7 +36,7 @@ mod test {
     #[test]
     fn at24x_test_t2() {
         let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-        let i2c = dev.i2c().unwrap();
+        let i2c = dev.i2c(hal::i2c::I2cSpeed::CLK_400kHz).unwrap();
         let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
 
         let delay = Duration::from_millis(5);
@@ -58,7 +58,7 @@ mod test {
     #[test]
     fn at24x_test_t3() {
         let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-        let i2c = dev.i2c().unwrap();
+        let i2c = dev.i2c(hal::i2c::I2cSpeed::CLK_400kHz).unwrap();
         let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
 
         let delay = Duration::from_millis(5);
@@ -78,7 +78,7 @@ mod test {
     #[test]
     fn at24x_test_t4() {
         let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-        let i2c = dev.i2c().unwrap();
+        let i2c = dev.i2c(hal::i2c::I2cSpeed::CLK_400kHz).unwrap();
         let mut eeprom = Eeprom24x::new_24x04(i2c, SlaveAddr::default());
 
         let delay = Duration::from_millis(50);

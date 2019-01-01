@@ -7,10 +7,19 @@ use std::cell::RefCell;
 use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::sync::Mutex;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[allow(non_camel_case_types)]
+pub enum SpiSpeed {
+    CLK_AUTO,
+    CLK_500kHz,
+    CLK_1MHz,
+    CLK_3MHz,
+    CLK_5MHz,
+}
+
 pub struct SpiBus<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Context>>,
     mode: Mode,
-    speed: u32,
     cmd_w: MPSSECmd,
     cmd_r: MPSSECmd,
 }
@@ -19,7 +28,6 @@ impl<'a> SpiBus<'a> {
     pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>) -> SpiBus {
         SpiBus {
             ctx,
-            speed: 0,
             mode: MODE_0,
             cmd_r: MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_IN,
             cmd_w: MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT,
@@ -46,14 +54,6 @@ impl<'a> SpiBus<'a> {
 
     pub fn get_mode(&mut self) -> Mode {
         self.mode
-    }
-
-    pub fn set_speed(&mut self, speed: u32) {
-        self.speed = speed;
-    }
-
-    pub fn get_speed(&mut self) -> u32 {
-        self.speed
     }
 }
 

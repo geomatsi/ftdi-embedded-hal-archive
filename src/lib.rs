@@ -18,6 +18,8 @@ mod tests {
     macro_rules! ftdi_test_suite {
         ($vendor: expr, $product: expr, $channel: expr) => {
             use crate::gpio::PinBank;
+            use crate::i2c::I2cSpeed;
+            use crate::spi::SpiSpeed;
             use crate::x232h::FTx232H;
             use crate::x232h::Interface;
             use embedded_hal::blocking::spi::Transfer;
@@ -32,13 +34,6 @@ mod tests {
 
                 dev.loopback(true).unwrap();
                 assert_eq!(dev.is_loopback(), true);
-
-                let mut sproductev = dev.spi().unwrap();
-                assert_eq!(sproductev.get_speed(), 0);
-                sproductev.set_speed(100);
-                assert_eq!(sproductev.get_speed(), 100);
-                sproductev.set_speed(1000);
-                assert_eq!(sproductev.get_speed(), 1000);
             }
 
             #[test]
@@ -130,19 +125,18 @@ mod tests {
                 let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
                 assert_eq!(dev.is_loopback(), false);
 
-                let mut sproductev = dev.spi().unwrap();
-                assert_eq!(sproductev.get_speed(), 0);
+                let mut spidev = dev.spi(SpiSpeed::CLK_AUTO).unwrap();
 
-                let res = sproductev.set_mode(MODE_0);
+                let res = spidev.set_mode(MODE_0);
                 assert!(res.is_ok(), "Can't set SPI MODE0");
 
-                let res = sproductev.set_mode(MODE_1);
+                let res = spidev.set_mode(MODE_1);
                 assert!(res.is_err(), "SPI MODE1 should not be supported");
 
-                let res = sproductev.set_mode(MODE_2);
+                let res = spidev.set_mode(MODE_2);
                 assert!(res.is_ok(), "Can't set SPI MODE2");
 
-                let res = sproductev.set_mode(MODE_3);
+                let res = spidev.set_mode(MODE_3);
                 assert!(res.is_err(), "SPI MODE3 should not be supported");
             }
 
@@ -151,14 +145,14 @@ mod tests {
                 let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
                 assert_eq!(dev.is_loopback(), false);
 
-                let spi1 = dev.spi();
+                let spi1 = dev.spi(SpiSpeed::CLK_AUTO);
                 assert!(spi1.is_ok(), "1st spi instance should be ok");
 
-                let i2c = dev.i2c();
+                let i2c = dev.i2c(I2cSpeed::CLK_AUTO);
                 assert!(i2c.is_err(), "i2c instance after spi should not be ok");
 
-                let spi2 = dev.spi();
-                assert!(spi2.is_ok(), "2st spi instance should be ok");
+                let spi2 = dev.spi(SpiSpeed::CLK_AUTO);
+                assert!(spi2.is_ok(), "2nd spi instance should be ok");
             }
 
             #[test]
@@ -166,14 +160,98 @@ mod tests {
                 let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
                 assert_eq!(dev.is_loopback(), false);
 
-                let i2c1 = dev.i2c();
+                let i2c1 = dev.i2c(I2cSpeed::CLK_AUTO);
                 assert!(i2c1.is_ok(), "1st i2c instance should be ok");
 
-                let spi = dev.spi();
+                let spi = dev.spi(SpiSpeed::CLK_AUTO);
                 assert!(spi.is_err(), "spi instance after i2c should not be ok");
 
-                let i2c2 = dev.i2c();
-                assert!(i2c2.is_ok(), "2st i2c instance should be ok");
+                let i2c2 = dev.i2c(I2cSpeed::CLK_AUTO);
+                assert!(i2c2.is_ok(), "2nd i2c instance should be ok");
+            }
+
+            #[test]
+            fn test_init_t8() {
+                let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
+                assert_eq!(dev.is_loopback(), false);
+
+                let spi1 = dev.spi(SpiSpeed::CLK_1MHz);
+                assert!(spi1.is_ok(), "1st spi instance should be ok");
+
+                let spi2 = dev.spi(SpiSpeed::CLK_1MHz);
+                assert!(
+                    spi2.is_ok(),
+                    "2nd spi instance with the same clock should be ok"
+                );
+
+                let spi3 = dev.spi(SpiSpeed::CLK_3MHz);
+                assert!(
+                    spi3.is_err(),
+                    "3rd spi failure: clock should be the same or auto"
+                );
+
+                let spi4 = dev.spi(SpiSpeed::CLK_AUTO);
+                assert!(spi4.is_ok(), "4th spi with AUTO clock should be ok");
+            }
+
+            #[test]
+            fn test_init_t9() {
+                let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
+                assert_eq!(dev.is_loopback(), false);
+
+                let spi1 = dev.spi(SpiSpeed::CLK_AUTO);
+                assert!(spi1.is_ok(), "1st spi instance should be ok");
+
+                let spi2 = dev.spi(SpiSpeed::CLK_1MHz);
+                assert!(
+                    spi2.is_err(),
+                    "2nd spi instance with non-AUTO clock should fail"
+                );
+
+                let spi3 = dev.spi(SpiSpeed::CLK_AUTO);
+                assert!(spi3.is_ok(), "3rd spi with AUTO clock should be ok");
+            }
+
+            #[test]
+            fn test_init_t10() {
+                let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
+                assert_eq!(dev.is_loopback(), false);
+
+                let i2c1 = dev.i2c(I2cSpeed::CLK_100kHz);
+                assert!(i2c1.is_ok(), "1st i2c instance should be ok");
+
+                let i2c2 = dev.i2c(I2cSpeed::CLK_100kHz);
+                assert!(
+                    i2c2.is_ok(),
+                    "2nd i2c instance with the same clock should be ok"
+                );
+
+                let i2c3 = dev.i2c(I2cSpeed::CLK_400kHz);
+                assert!(
+                    i2c3.is_err(),
+                    "3rd i2c failure: clk should be the same or auto"
+                );
+
+                let i2c4 = dev.i2c(I2cSpeed::CLK_AUTO);
+                assert!(i2c4.is_ok(), "4th i2c with AUTO clock should be ok");
+            }
+
+            #[test]
+            fn test_init_t11() {
+                let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
+                assert_eq!(dev.is_loopback(), false);
+
+                let i2c1 = dev.i2c(I2cSpeed::CLK_AUTO);
+                assert!(i2c1.is_ok(), "1st i2c instance should be ok");
+
+                let i2c2 = dev.i2c(I2cSpeed::CLK_400kHz);
+                assert!(
+                    i2c2.is_err(),
+                    "2nd i2c instance with non-AUTO clock should fail"
+                );
+
+                let i2c3 = dev.i2c(I2cSpeed::CLK_AUTO);
+                assert!(i2c3.is_ok(), "3rd i2c with AUTO clock should be ok");
             }
 
             #[test]
@@ -182,13 +260,13 @@ mod tests {
                 dev.loopback(true).unwrap();
                 assert_eq!(dev.is_loopback(), true);
 
-                let mut sproductev = dev.spi().unwrap();
+                let mut spidev = dev.spi(SpiSpeed::CLK_AUTO).unwrap();
 
                 // loopback: 1-byte messages
                 for v in 0x0..0xff {
                     let mut tx = [v; 1];
                     let cx = tx;
-                    let rx = sproductev.transfer(&mut tx).unwrap();
+                    let rx = spidev.transfer(&mut tx).unwrap();
 
                     assert_eq!(cx, rx);
                 }
@@ -200,13 +278,13 @@ mod tests {
                 dev.loopback(true).unwrap();
                 assert_eq!(dev.is_loopback(), true);
 
-                let mut sproductev = dev.spi().unwrap();
+                let mut spidev = dev.spi(SpiSpeed::CLK_AUTO).unwrap();
 
                 // loopback: 3-byte messages
                 for (x, y, z) in iproduct!(1..5, 11..15, 21..25) {
                     let mut tx = [x, y, z];
                     let cx = tx;
-                    let rx = sproductev.transfer(&mut tx).unwrap();
+                    let rx = spidev.transfer(&mut tx).unwrap();
                     assert_eq!(cx, rx);
                 }
             }
@@ -217,7 +295,7 @@ mod tests {
                 dev.loopback(true).unwrap();
                 assert_eq!(dev.is_loopback(), true);
 
-                let mut sproductev = dev.spi().unwrap();
+                let mut spidev = dev.spi(SpiSpeed::CLK_AUTO).unwrap();
 
                 // loopback: 5-byte random messages
                 for _ in 1..10 {
@@ -229,7 +307,7 @@ mod tests {
                         })
                         .collect();
                     let cx = tx.clone();
-                    let rx = sproductev.transfer(&mut tx).unwrap();
+                    let rx = spidev.transfer(&mut tx).unwrap();
                     assert_eq!(cx, rx);
                 }
             }
@@ -240,8 +318,8 @@ mod tests {
                 dev.loopback(true).unwrap();
                 assert_eq!(dev.is_loopback(), true);
 
-                let mut sproductev1 = dev.spi().unwrap();
-                let mut sproductev2 = dev.spi().unwrap();
+                let mut spidev1 = dev.spi(SpiSpeed::CLK_AUTO).unwrap();
+                let mut spidev2 = dev.spi(SpiSpeed::CLK_AUTO).unwrap();
 
                 // loopback: 1-byte messages on both protocol buses
                 for v in 0x0..0xff {
@@ -251,8 +329,8 @@ mod tests {
                     let mut tx2 = [v; 1];
                     let cx2 = tx2;
 
-                    let rx1 = sproductev1.transfer(&mut tx1).unwrap();
-                    let rx2 = sproductev2.transfer(&mut tx2).unwrap();
+                    let rx1 = spidev1.transfer(&mut tx1).unwrap();
+                    let rx2 = spidev2.transfer(&mut tx2).unwrap();
 
                     assert_eq!(cx1, rx1);
                     assert_eq!(cx2, rx2);
