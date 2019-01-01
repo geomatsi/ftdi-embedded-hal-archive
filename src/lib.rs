@@ -46,20 +46,24 @@ mod tests {
                 let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
 
                 let pl0 = dev.pl0().unwrap();
-                assert_eq!(pl0.get_bit(), 0b0001_0000);
+                assert_eq!(pl0.get_bit(), 4);
                 assert_eq!(pl0.get_bank(), PinBank::Low);
+                assert_eq!(format!("{}", pl0), "PL0");
 
                 let pl1 = dev.pl1().unwrap();
-                assert_eq!(pl1.get_bit(), 0b0010_0000);
+                assert_eq!(pl1.get_bit(), 5);
                 assert_eq!(pl1.get_bank(), PinBank::Low);
+                assert_eq!(format!("{}", pl1), "PL1");
 
                 let pl2 = dev.pl2().unwrap();
-                assert_eq!(pl2.get_bit(), 0b0100_0000);
+                assert_eq!(pl2.get_bit(), 6);
                 assert_eq!(pl2.get_bank(), PinBank::Low);
+                assert_eq!(format!("{}", pl2), "PL2");
 
                 let pl3 = dev.pl3().unwrap();
-                assert_eq!(pl3.get_bit(), 0b1000_0000);
+                assert_eq!(pl3.get_bit(), 7);
                 assert_eq!(pl3.get_bank(), PinBank::Low);
+                assert_eq!(format!("{}", pl3), "PL3");
             }
 
             #[test]
@@ -67,36 +71,44 @@ mod tests {
                 let dev = FTx232H::init_chan($vendor, $product, $channel).unwrap();
 
                 let ph0 = dev.ph0().unwrap();
-                assert_eq!(ph0.get_bit(), 0b0000_0001);
+                assert_eq!(ph0.get_bit(), 0);
                 assert_eq!(ph0.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph0), "PH0");
 
                 let ph1 = dev.ph1().unwrap();
-                assert_eq!(ph1.get_bit(), 0b0000_0010);
+                assert_eq!(ph1.get_bit(), 1);
                 assert_eq!(ph1.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph1), "PH1");
 
                 let ph2 = dev.ph2().unwrap();
-                assert_eq!(ph2.get_bit(), 0b0000_0100);
+                assert_eq!(ph2.get_bit(), 2);
                 assert_eq!(ph2.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph2), "PH2");
 
                 let ph3 = dev.ph3().unwrap();
-                assert_eq!(ph3.get_bit(), 0b0000_1000);
+                assert_eq!(ph3.get_bit(), 3);
                 assert_eq!(ph3.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph3), "PH3");
 
                 let ph4 = dev.ph4().unwrap();
-                assert_eq!(ph4.get_bit(), 0b0001_0000);
+                assert_eq!(ph4.get_bit(), 4);
                 assert_eq!(ph4.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph4), "PH4");
 
                 let ph5 = dev.ph5().unwrap();
-                assert_eq!(ph5.get_bit(), 0b0010_0000);
+                assert_eq!(ph5.get_bit(), 5);
                 assert_eq!(ph5.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph5), "PH5");
 
                 let ph6 = dev.ph6().unwrap();
-                assert_eq!(ph6.get_bit(), 0b0100_0000);
+                assert_eq!(ph6.get_bit(), 6);
                 assert_eq!(ph6.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph6), "PH6");
 
                 let ph7 = dev.ph7().unwrap();
-                assert_eq!(ph7.get_bit(), 0b1000_0000);
+                assert_eq!(ph7.get_bit(), 7);
                 assert_eq!(ph7.get_bank(), PinBank::High);
+                assert_eq!(format!("{}", ph7), "PH7");
             }
 
             #[test]

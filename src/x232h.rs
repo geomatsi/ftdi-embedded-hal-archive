@@ -175,20 +175,20 @@ impl FTx232H {
     }
 
     // gpio pins: low bank
-    crate::declare_gpio_pin!(pl0, 0b0001_0000, PinBank::Low);
-    crate::declare_gpio_pin!(pl1, 0b0010_0000, PinBank::Low);
-    crate::declare_gpio_pin!(pl2, 0b0100_0000, PinBank::Low);
-    crate::declare_gpio_pin!(pl3, 0b1000_0000, PinBank::Low);
+    crate::declare_gpio_pin!(pl0, 4, PinBank::Low);
+    crate::declare_gpio_pin!(pl1, 5, PinBank::Low);
+    crate::declare_gpio_pin!(pl2, 6, PinBank::Low);
+    crate::declare_gpio_pin!(pl3, 7, PinBank::Low);
 
     // gpio pins: high bank
-    crate::declare_gpio_pin!(ph0, 0b0000_0001, PinBank::High);
-    crate::declare_gpio_pin!(ph1, 0b0000_0010, PinBank::High);
-    crate::declare_gpio_pin!(ph2, 0b0000_0100, PinBank::High);
-    crate::declare_gpio_pin!(ph3, 0b0000_1000, PinBank::High);
-    crate::declare_gpio_pin!(ph4, 0b0001_0000, PinBank::High);
-    crate::declare_gpio_pin!(ph5, 0b0010_0000, PinBank::High);
-    crate::declare_gpio_pin!(ph6, 0b0100_0000, PinBank::High);
-    crate::declare_gpio_pin!(ph7, 0b1000_0000, PinBank::High);
+    crate::declare_gpio_pin!(ph0, 0, PinBank::High);
+    crate::declare_gpio_pin!(ph1, 1, PinBank::High);
+    crate::declare_gpio_pin!(ph2, 2, PinBank::High);
+    crate::declare_gpio_pin!(ph3, 3, PinBank::High);
+    crate::declare_gpio_pin!(ph4, 4, PinBank::High);
+    crate::declare_gpio_pin!(ph5, 5, PinBank::High);
+    crate::declare_gpio_pin!(ph6, 6, PinBank::High);
+    crate::declare_gpio_pin!(ph7, 7, PinBank::High);
 }
 
 impl Drop for FTx232H {

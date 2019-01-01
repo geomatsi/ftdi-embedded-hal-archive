@@ -1,6 +1,7 @@
 use crate::mpsse::MPSSECmd;
 
 use std::cell::RefCell;
+use std::fmt;
 use std::io::{Read, Write};
 use std::sync::Mutex;
 
@@ -10,12 +11,25 @@ pub enum PinBank {
     High,
 }
 
+impl fmt::Display for PinBank {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            PinBank::Low => write!(f, "L"),
+            PinBank::High => write!(f, "H"),
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! declare_gpio_pin {
-    ($pin:ident, $bit:expr, $bank: expr) => (
+    ($pin: ident, $bit: expr, $bank: expr) => (
         pub fn $pin(&self) -> Result<GpioPin> {
             if !*self.$pin.borrow() {
                 return Err(Error::new(ErrorKind::Other, "pin already in use"));
+            }
+
+            if $bit > 7 {
+                return Err(Error::new(ErrorKind::Other, "invalid pin number"));
             }
 
             self.$pin.replace(false);
@@ -28,6 +42,15 @@ pub struct GpioPin<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Context>>,
     bank: PinBank,
     bit: u8,
+}
+
+impl<'a> fmt::Display for GpioPin<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self.bank {
+            PinBank::Low => write!(f, "P{}{}", self.bank, self.bit - 4),
+            PinBank::High => write!(f, "P{}{}", self.bank, self.bit),
+        }
+    }
 }
 
 impl<'a> GpioPin<'a> {
@@ -63,9 +86,9 @@ impl<'a> GpioPin<'a> {
         ftdi.read_exact(&mut value).unwrap();
 
         let v = if val {
-            value[0] | self.bit
+            value[0] | (1 << self.bit)
         } else {
-            value[0] & (!self.bit)
+            value[0] & (!(1 << self.bit))
         };
 
         ftdi.usb_purge_buffers().unwrap();
