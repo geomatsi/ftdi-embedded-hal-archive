@@ -35,13 +35,13 @@ Limitations:
 - tests can be run only when FTDI devices are connected
 
 TODO:
-- more cleanup and refactoring in terms of idiomatic Rust
-- suppport several connected FTDI devices with the same USB PID/VID
-- enable ADBUS[0..3] and BDBUS[0..3] pins as GPIO pins as well, just keep track of selected functionality, it is already done anyway to disable i2c and spi at the same time
-- add gpio input support
-- add support for FT4232H
-- more flexibility in clock configuration (?)
-- add more I2C/SPI/GPIO examples/tests, e.g. 74HC595, [MCP3008](https://crates.io/crates/mcp3008), [PCF8574](https://crates.io/crates/pcf857x), and more
+- [ ] more cleanup and refactoring in terms of idiomatic Rust
+- [ ] suppport several connected FTDI devices with the same USB PID/VID
+- [ ] enable ADBUS[0..3] and BDBUS[0..3] pins as GPIO pins as well, just keep track of selected functionality, it is already done anyway to disable i2c and spi at the same time
+- [ ] add gpio input support
+- [ ] add support for FT4232H
+- [ ] more flexibility in clock configuration (?)
+- [ ] add more I2C/SPI/GPIO examples/tests, e.g. 74HC595, [MCP3008](https://crates.io/crates/mcp3008), [PCF8574](https://crates.io/crates/pcf857x), and more
 
 ## Circuit examples
 ### SPI nRF24L01+ breakout board
