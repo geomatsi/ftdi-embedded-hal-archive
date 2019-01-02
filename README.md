@@ -43,7 +43,15 @@ Several items from the list of limitations are obvious candidates for TODO list:
 - more flexibility in clock configuration (?)
 - add more I2C/SPI examples, e.g. 74HC595, [MCP3008](https://crates.io/crates/mcp3008), [PCF8574](https://crates.io/crates/pcf857x), and more
 
-## Documents
+## Circuit examples
+
+### SPI nRF24L01+ breakout board
+![alt text](pics/ft232h-spi-example1.png)
+
+### I2C EEPROM at24c04
+![alt text](pics/ft232h-i2c-example1.png)
+
+## Useful documents and links
 Data sheets for FTDI chips and development modules:
 - [FT232H datasheet](https://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT232H.pdf)
 - [FT2232H datasheet](https://www.ftdichip.com/Support/Documents/DataSheets/ICs/DS_FT2232H.pdf)
