@@ -18,6 +18,6 @@ git = "https://github.com/geomatsi/ftdi-rs"
 branch = "wip-add-more-wrappers"
 
 [dev-dependencies]
-embedded-nrf24l01 = { git = "https://github.com/geomatsi/embedded-nrf24l01", branch = "update-deps" }
+embedded-nrf24l01 = { git = "https://github.com/astro/embedded-nrf24l01", rev = "ab3ac91fb93746be9b79733960404c6f82528137" }
 eeprom24x = "0.2.0"
 lm75 = "0.1.1"
