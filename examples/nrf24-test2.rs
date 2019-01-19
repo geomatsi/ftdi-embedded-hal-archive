@@ -7,11 +7,16 @@ use embedded_nrf24l01::CrcMode;
 use embedded_nrf24l01::DataRate;
 use embedded_nrf24l01::NRF24L01;
 
+use std::thread::sleep;
+use std::time::Duration;
+
+// Simple Tx test for embedded-nrf24l01 crate
+
 fn main() {
     let dev = FTx232H::init(0x0403, 0x6014).unwrap();
     let spidev = dev.spi(hal::spi::SpiSpeed::CLK_1MHz).unwrap();
-    let cs = dev.pl2().unwrap();
     let ce = dev.pl1().unwrap();
+    let cs = dev.pl2().unwrap();
 
     // nRF24L01 setup
     let mut nrf = NRF24L01::new(ce, cs, spidev).unwrap();
@@ -27,12 +32,17 @@ fn main() {
     nrf.flush_tx().unwrap();
     nrf.flush_rx().unwrap();
 
-    // nRF24L01 simple tests
-    let channels: Vec<u8> = vec![1, 2, 20, 40, 80, 100];
-    for r in channels {
-        nrf.set_frequency(r).unwrap();
-        let ch = nrf.get_frequency().unwrap();
-        println!("channel: {:?}", ch);
-        assert_eq!(ch, r);
+    let delay = Duration::from_millis(1000);
+    let mut tx = nrf.tx().unwrap();
+    let msg = b"hello";
+
+    sleep(delay);
+
+    loop {
+        println!("Tx: {:?}", msg);
+        tx.send(msg).unwrap();
+        tx.wait_empty().unwrap();
+
+        sleep(delay);
     }
 }

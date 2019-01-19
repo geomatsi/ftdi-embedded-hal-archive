@@ -41,7 +41,7 @@ fn main() {
 
         if pipe.is_some() {
             let data = rx.read().unwrap();
-            println!("{:?}", data.as_ref());
+            println!("Rx: {:?}", data.as_ref());
         }
 
         sleep(delay);
