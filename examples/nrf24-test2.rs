@@ -11,7 +11,7 @@ fn main() {
     let dev = FTx232H::init(0x0403, 0x6014).unwrap();
     let spidev = dev.spi(hal::spi::SpiSpeed::CLK_1MHz).unwrap();
     let cs = dev.pl2().unwrap();
-    let ce = dev.ph0().unwrap();
+    let ce = dev.pl1().unwrap();
 
     // nRF24L01 setup
     let mut nrf = NRF24L01::new(ce, cs, spidev).unwrap();
