@@ -55,7 +55,7 @@ impl FTx232H {
         context.set_interface(intf)?;
 
         if context.usb_open(vendor, product).is_err() {
-            panic!("No FTDI device");
+            return Err(Error::new(ErrorKind::Other, "no FTDI device found"));
         }
 
         context.set_write_chunksize(1024);
