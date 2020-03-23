@@ -16,6 +16,8 @@ jobs:
         toolchain: stable
         target: x86_64-unknown-linux-gnu
         override: true
+    - name: Install libftdi
+      run: sudo apt-get -y install libftdi1-2 libftdi1-dev
     - name: Build Rust Embedded examples for BluePill
       run: cargo build --lib
     - name: Build Rust Embedded examples for BluePill
