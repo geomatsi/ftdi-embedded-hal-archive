@@ -18,7 +18,7 @@ jobs:
         override: true
     - name: Install libftdi
       run: sudo apt-get -y install libftdi1-2 libftdi1-dev
-    - name: Build Rust Embedded examples for BluePill
+    - name: Build ftdi-embedded-hal library
       run: cargo build --lib
-    - name: Build Rust Embedded examples for BluePill
+    - name: Build ftdi-embedded-hal examples
       run: cargo build --examples
