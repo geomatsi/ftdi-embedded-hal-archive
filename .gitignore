@@ -7,3 +7,4 @@ target
 .gdb_history
 Cargo.lock
 rusty-tags.vi
+.idea
