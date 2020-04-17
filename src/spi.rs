@@ -15,6 +15,8 @@ pub enum SpiSpeed {
     CLK_1MHz,
     CLK_3MHz,
     CLK_5MHz,
+    CLK_10MHz,
+    CLK_20MHz,
 }
 
 pub struct SpiBus<'a> {
