@@ -153,6 +153,8 @@ impl FTx232H {
                 SpiSpeed::CLK_1MHz | SpiSpeed::CLK_AUTO => (0x1d, 0x0),
                 SpiSpeed::CLK_3MHz => (0x9, 0x0),
                 SpiSpeed::CLK_5MHz => (0x5, 0x0),
+                SpiSpeed::CLK_10MHz => (0x2, 0x0),
+                SpiSpeed::CLK_20MHz => (0x1, 0x0),
             };
 
             ftdi.write_all(&[MPSSECmd::TCK_DIVISOR.into(), div1, div2])?;
