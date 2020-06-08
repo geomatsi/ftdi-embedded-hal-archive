@@ -219,7 +219,10 @@ impl FTx232H {
 
 impl Drop for FTx232H {
     fn drop(&mut self) {
-        let lock = self.mtx.lock().unwrap();
+        let ref mut lock = match self.mtx.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         let mut ftdi = lock.borrow_mut();
 
         ftdi.usb_purge_buffers().unwrap();
