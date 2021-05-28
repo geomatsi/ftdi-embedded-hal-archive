@@ -21,8 +21,8 @@ fn main() {
     // nRF24L01 setup
     let mut nrf = NRF24L01::new(ce, cs, spidev).unwrap();
     nrf.set_frequency(120).unwrap();
-    nrf.set_rf(DataRate::R250Kbps, 3 /* 0 dBm */).unwrap();
-    nrf.set_crc(Some(CrcMode::OneByte)).unwrap();
+    nrf.set_rf(&DataRate::R250Kbps, 3 /* 0 dBm */).unwrap();
+    nrf.set_crc(CrcMode::OneByte).unwrap();
     nrf.set_auto_retransmit(0b0100, 0b1111).unwrap();
 
     let addr: [u8; 5] = [0xe5, 0xe4, 0xe3, 0xe2, 0xe1];

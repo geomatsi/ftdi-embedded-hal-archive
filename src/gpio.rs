@@ -1,6 +1,8 @@
 use crate::mpsse::MPSSECmd;
 
+use embedded_hal::digital::v2::OutputPin;
 use std::cell::RefCell;
+use std::convert::Infallible;
 use std::fmt;
 use std::io::{Read, Write};
 use std::sync::Mutex;
@@ -22,7 +24,7 @@ impl fmt::Display for PinBank {
 
 #[macro_export]
 macro_rules! declare_gpio_pin {
-    ($pin: ident, $bit: expr, $bank: expr) => (
+    ($pin: ident, $bit: expr, $bank: expr) => {
         pub fn $pin(&self) -> Result<GpioPin> {
             if !*self.$pin.borrow() {
                 return Err(Error::new(ErrorKind::Other, "pin already in use"));
@@ -35,7 +37,7 @@ macro_rules! declare_gpio_pin {
             self.$pin.replace(false);
             Ok(GpioPin::new(&self.mtx, $bit, $bank))
         }
-    )
+    };
 }
 
 pub struct GpioPin<'a> {
@@ -55,7 +57,7 @@ impl<'a> fmt::Display for GpioPin<'a> {
 
 impl<'a> GpioPin<'a> {
     pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>, bit: u8, bank: PinBank) -> GpioPin {
-        GpioPin { ctx, bit, bank }
+        GpioPin { ctx, bank, bit }
     }
 
     pub fn get_bit(&self) -> u8 {
@@ -96,12 +98,16 @@ impl<'a> GpioPin<'a> {
     }
 }
 
-impl<'a> embedded_hal::digital::OutputPin for GpioPin<'a> {
-    fn set_low(&mut self) {
+impl<'a> OutputPin for GpioPin<'a> {
+    type Error = Infallible;
+
+    fn set_low(&mut self) -> Result<(), Self::Error> {
         self.set_pin(false);
+        Ok(())
     }
 
-    fn set_high(&mut self) {
+    fn set_high(&mut self) -> Result<(), Self::Error> {
         self.set_pin(true);
+        Ok(())
     }
 }

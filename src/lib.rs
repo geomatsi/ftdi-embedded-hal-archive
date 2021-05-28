@@ -1,17 +1,8 @@
-extern crate embedded_hal;
-extern crate ftdi;
-extern crate nb;
-
-extern crate itertools;
-extern crate rand;
-
 pub mod gpio;
 pub mod i2c;
 pub mod mpsse;
 pub mod spi;
 pub mod x232h;
-
-//
 
 #[cfg(test)]
 mod tests {
@@ -303,7 +294,7 @@ mod tests {
                     let mut tx: Vec<u8> = (0..5)
                         .map(|_| {
                             // 0 (inclusive) to 254 (inclusive)
-                            rng.gen_range(0, 255)
+                            rng.gen_range(0..255)
                         })
                         .collect();
                     let cx = tx.clone();

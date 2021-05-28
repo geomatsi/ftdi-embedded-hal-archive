@@ -1,8 +1,7 @@
 extern crate ftdi_embedded_hal as hal;
 
 extern crate embedded_hal;
-use embedded_hal::blocking::spi::Transfer;
-use embedded_hal::digital::OutputPin;
+use embedded_hal::{blocking::spi::Transfer, digital::v2::OutputPin};
 
 use crate::hal::x232h::FTx232H;
 
@@ -16,7 +15,7 @@ fn main() {
     // This example refers to specific schematics:
     // nRF24 CSN pin is connected to PinL2 rather than TMS/CS pin
     for r in regs {
-        pl2.set_low();
+        pl2.set_low().unwrap();
 
         // send command: read register r
         let mut cmd = [0x1F & r; 1];
@@ -26,7 +25,7 @@ fn main() {
         let mut dummy = [0xff];
         let regval = spidev.transfer(&mut dummy).unwrap();
 
-        pl2.set_high();
+        pl2.set_high().unwrap();
 
         println!("REG[0x{:x}] = [{:08b}]", r, regval[0]);
     }

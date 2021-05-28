@@ -1,8 +1,8 @@
-extern crate ftdi_embedded_hal as hal;
 use crate::hal::x232h::FTx232H;
-
-extern crate embedded_nrf24l01;
 use embedded_nrf24l01::Configuration;
+use ftdi_embedded_hal as hal;
+
+use embedded_nrf24l01;
 use embedded_nrf24l01::CrcMode;
 use embedded_nrf24l01::DataRate;
 use embedded_nrf24l01::NRF24L01;
@@ -20,8 +20,8 @@ fn main() {
 
     let mut nrf = NRF24L01::new(ce, cs, spidev).unwrap();
     nrf.set_frequency(120).unwrap();
-    nrf.set_rf(DataRate::R250Kbps, 3 /* 0 dBm */).unwrap();
-    nrf.set_crc(Some(CrcMode::OneByte)).unwrap();
+    nrf.set_rf(&DataRate::R250Kbps, 3 /* 0 dBm */).unwrap();
+    nrf.set_crc(CrcMode::OneByte).unwrap();
     nrf.set_auto_retransmit(0b0100, 0b1111).unwrap();
     nrf.set_auto_ack(&[true; 6]).unwrap();
 

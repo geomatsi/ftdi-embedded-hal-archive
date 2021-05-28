@@ -23,9 +23,9 @@ pub enum MPSSECmd {
     SEND_IMMEDIATE_RESP,
 }
 
-impl Into<u8> for MPSSECmd {
-    fn into(self) -> u8 {
-        let cmd = match self {
+impl From<MPSSECmd> for u8 {
+    fn from(cmd: MPSSECmd) -> Self {
+        match cmd {
             MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_OUT => 0x10,
             MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT => 0x11,
             MPSSECmd::MSB_RISING_EDGE_CLK_BIT_OUT => 0x12,
@@ -45,9 +45,7 @@ impl Into<u8> for MPSSECmd {
             MPSSECmd::LOOPBACK_DISABLE => 0x85,
             MPSSECmd::TCK_DIVISOR => 0x86,
             MPSSECmd::SEND_IMMEDIATE_RESP => 0x87,
-        };
-
-        cmd as u8
+        }
     }
 }
 
@@ -69,9 +67,9 @@ pub enum MPSSECmd_H {
     CLK_BYTES_OR_LOW,
 }
 
-impl Into<u8> for MPSSECmd_H {
-    fn into(self) -> u8 {
-        let cmd = match self {
+impl From<MPSSECmd_H> for u8 {
+    fn from(cmd: MPSSECmd_H) -> Self {
+        match cmd {
             MPSSECmd_H::DISABLE_DIV_5_CLK => 0x8a,
             MPSSECmd_H::ENABLE_DIV_5_CLK => 0x8b,
             MPSSECmd_H::ENABLE_3_PHASE_CLK => 0x8c,
@@ -84,8 +82,6 @@ impl Into<u8> for MPSSECmd_H {
             MPSSECmd_H::DISABLE_ADAPTIVE_CLK => 0x97,
             MPSSECmd_H::CLK_BYTES_OR_HIGH => 0x9c,
             MPSSECmd_H::CLK_BYTES_OR_LOW => 0x9d,
-        };
-
-        cmd as u8
+        }
     }
 }

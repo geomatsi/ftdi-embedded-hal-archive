@@ -219,7 +219,7 @@ impl FTx232H {
 
 impl Drop for FTx232H {
     fn drop(&mut self) {
-        let ref mut lock = match self.mtx.lock() {
+        let lock = match self.mtx.lock() {
             Ok(guard) => guard,
             Err(poisoned) => poisoned.into_inner(),
         };
