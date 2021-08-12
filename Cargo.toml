@@ -9,10 +9,7 @@ nb = "1.0.0"
 rand = "0.8"
 itertools = "0.10"
 embedded-hal = "0.2"
-
-[dependencies.ftdi]
-git = "https://github.com/geomatsi/ftdi-rs"
-branch = "wip-add-more-wrappers"
+ftdi = "0.1"
 
 [dev-dependencies]
 embedded-nrf24l01 = "0.2.0"
