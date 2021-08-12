@@ -15,11 +15,11 @@ pub enum I2cSpeed {
 }
 
 pub struct I2cBus<'a> {
-    ctx: &'a Mutex<RefCell<ftdi::Context>>,
+    ctx: &'a Mutex<RefCell<ftdi::Device>>,
 }
 
 impl<'a> I2cBus<'a> {
-    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>) -> I2cBus {
+    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Device>>) -> I2cBus {
         I2cBus { ctx }
     }
 }

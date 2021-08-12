@@ -20,14 +20,14 @@ pub enum SpiSpeed {
 }
 
 pub struct SpiBus<'a> {
-    ctx: &'a Mutex<RefCell<ftdi::Context>>,
+    ctx: &'a Mutex<RefCell<ftdi::Device>>,
     mode: Mode,
     cmd_w: MPSSECmd,
     cmd_r: MPSSECmd,
 }
 
 impl<'a> SpiBus<'a> {
-    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>) -> SpiBus {
+    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Device>>) -> SpiBus {
         SpiBus {
             ctx,
             mode: MODE_0,
