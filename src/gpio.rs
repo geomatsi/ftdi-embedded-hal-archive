@@ -41,7 +41,7 @@ macro_rules! declare_gpio_pin {
 }
 
 pub struct GpioPin<'a> {
-    ctx: &'a Mutex<RefCell<ftdi::Context>>,
+    ctx: &'a Mutex<RefCell<ftdi::Device>>,
     bank: PinBank,
     bit: u8,
 }
@@ -56,7 +56,7 @@ impl<'a> fmt::Display for GpioPin<'a> {
 }
 
 impl<'a> GpioPin<'a> {
-    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Context>>, bit: u8, bank: PinBank) -> GpioPin {
+    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Device>>, bit: u8, bank: PinBank) -> GpioPin {
         GpioPin { ctx, bank, bit }
     }
 

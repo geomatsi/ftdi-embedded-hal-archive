@@ -19,7 +19,7 @@ use std::io::Write;
 use std::sync::Mutex;
 
 pub struct FTx232H {
-    mtx: Mutex<RefCell<ftdi::Context>>,
+    mtx: Mutex<RefCell<ftdi::Device>>,
     loopback: bool,
 
     i2c: RefCell<Option<I2cSpeed>>,
@@ -50,42 +50,36 @@ impl FTx232H {
     }
 
     fn init_ctx(vendor: u16, product: u16, intf: ftdi::Interface) -> Result<FTx232H> {
-        let mut context = ftdi::Context::new();
+        let mut device = ftdi::find_by_vid_pid(vendor, product).interface(intf).open()?;
 
-        context.set_interface(intf)?;
-
-        if context.usb_open(vendor, product).is_err() {
-            return Err(Error::new(ErrorKind::Other, "no FTDI device found"));
-        }
-
-        context.set_write_chunksize(1024);
-        context.set_read_chunksize(1024);
-        context.usb_reset()?;
-        context.set_latency_timer(5)?;
-        context.set_bitmode(0, BitMode::MPSSE)?;
-        context.usb_purge_buffers()?;
+        device.set_write_chunksize(1024);
+        device.set_read_chunksize(1024);
+        device.usb_reset()?;
+        device.set_latency_timer(5)?;
+        device.set_bitmode(0, BitMode::MPSSE)?;
+        device.usb_purge_buffers()?;
 
         // clock settings:
         // - disable DIV_5 => 60MHz
         // - disable adaptive clocking
         // - disable 3-phase clocking
-        context.write_all(&[MPSSECmd_H::DISABLE_DIV_5_CLK.into()])?;
-        context.write_all(&[MPSSECmd_H::DISABLE_ADAPTIVE_CLK.into()])?;
-        context.write_all(&[MPSSECmd_H::DISABLE_3_PHASE_CLK.into()])?;
+        device.write_all(&[MPSSECmd_H::DISABLE_DIV_5_CLK.into()])?;
+        device.write_all(&[MPSSECmd_H::DISABLE_ADAPTIVE_CLK.into()])?;
+        device.write_all(&[MPSSECmd_H::DISABLE_3_PHASE_CLK.into()])?;
 
         // disable loopback
-        context.write_all(&[MPSSECmd::LOOPBACK_DISABLE.into()])?;
+        device.write_all(&[MPSSECmd::LOOPBACK_DISABLE.into()])?;
 
         // FIXME: current approach is limited: fixed in/out pin configuration:
         // - low bits: all outputs(0)
-        context.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1111])?;
+        device.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1111])?;
 
         // FIXME: current approach is limited: fixed in/out pin configuration:
         // - high bits: all outputs(0)
-        context.write_all(&[MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
+        device.write_all(&[MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
 
         let d = FTx232H {
-            mtx: Mutex::new(RefCell::new(context)),
+            mtx: Mutex::new(RefCell::new(device)),
             loopback: false,
 
             i2c: RefCell::new(None),
