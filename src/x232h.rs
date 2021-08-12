@@ -1,6 +1,7 @@
 use ftdi::BitMode;
 pub use ftdi::Interface;
 
+use crate::error::{X232Error, Result, ErrorKind};
 use crate::mpsse::MPSSECmd;
 use crate::mpsse::MPSSECmd_H;
 
@@ -12,9 +13,6 @@ use crate::spi::SpiBus;
 use crate::spi::SpiSpeed;
 
 use std::cell::RefCell;
-use std::io::Error;
-use std::io::ErrorKind;
-use std::io::Result;
 use std::io::Write;
 use std::sync::Mutex;
 
@@ -56,7 +54,7 @@ impl FTx232H {
         device.set_read_chunksize(1024);
         device.usb_reset()?;
         device.set_latency_timer(5)?;
-        device.set_bitmode(0, BitMode::MPSSE)?;
+        device.set_bitmode(0, BitMode::Mpsse)?;
         device.usb_purge_buffers()?;
 
         // clock settings:
@@ -128,7 +126,7 @@ impl FTx232H {
 
     pub fn spi(&self, speed: SpiSpeed) -> Result<SpiBus> {
         if (*self.i2c.borrow()).is_some() {
-            return Err(Error::new(ErrorKind::Other, "can't use spi: i2c is active"));
+            return Err(X232Error::HAL(ErrorKind::BusBusy))
         }
 
         if (*self.spi.borrow()).is_none() {
@@ -155,7 +153,7 @@ impl FTx232H {
         } else if speed != SpiSpeed::CLK_AUTO {
             // clock sanity check
             if Some(speed) != *self.spi.borrow() {
-                return Err(Error::new(ErrorKind::Other, "spi clock mismatch"));
+                return Err(X232Error::HAL(ErrorKind::InvalidClock))
             }
         }
 
@@ -164,7 +162,7 @@ impl FTx232H {
 
     pub fn i2c(&self, speed: I2cSpeed) -> Result<I2cBus> {
         if (*self.spi.borrow()).is_some() {
-            return Err(Error::new(ErrorKind::Other, "can't use i2c: spi is active"));
+            return Err(X232Error::HAL(ErrorKind::BusBusy))
         }
 
         if (*self.i2c.borrow()).is_none() {
@@ -187,7 +185,7 @@ impl FTx232H {
         } else if speed != I2cSpeed::CLK_AUTO {
             // clock sanity check
             if Some(speed) != *self.i2c.borrow() {
-                return Err(Error::new(ErrorKind::Other, "i2c clock mismatch"));
+                return Err(X232Error::HAL(ErrorKind::InvalidClock))
             }
         }
 
@@ -220,6 +218,5 @@ impl Drop for FTx232H {
         let mut ftdi = lock.borrow_mut();
 
         ftdi.usb_purge_buffers().unwrap();
-        ftdi.usb_close().unwrap();
     }
 }

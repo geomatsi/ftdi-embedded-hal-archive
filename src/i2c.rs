@@ -1,9 +1,10 @@
 #![allow(clippy::identity_op)]
 
+use crate::error::{X232Error, Result, ErrorKind};
 use crate::mpsse::MPSSECmd;
 
 use std::cell::RefCell;
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use std::io::{Read, Write};
 use std::sync::Mutex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -163,7 +164,7 @@ impl<'a> I2cBus<'a> {
 }
 
 impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
-    type Error = Error;
+    type Error = X232Error;
 
     fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<()> {
         if buffer.is_empty() {
@@ -198,7 +199,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
         }
 
         // READ bytes from slave
@@ -229,7 +230,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
 }
 
 impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
-    type Error = Error;
+    type Error = X232Error;
 
     fn write(&mut self, address: u8, bytes: &[u8]) -> Result<()> {
         if bytes.is_empty() {
@@ -264,7 +265,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
         }
 
         // WRITE bytes to slave
@@ -280,7 +281,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
-                return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
+                return Err(X232Error::HAL(ErrorKind::I2cNoAck))
             }
         }
 
@@ -297,15 +298,12 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 }
 
 impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
-    type Error = Error;
+    type Error = X232Error;
 
     fn write_read(&mut self, address: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<()> {
         // FIXME: simplified: do not fallback to Read or Write, just throw error
         if bytes.is_empty() || buffer.is_empty() {
-            return Err(Error::new(
-                ErrorKind::InvalidData,
-                "Empty input or output buffer",
-            ));
+            return Err(X232Error::HAL(ErrorKind::InvalidParams))
         }
 
         let lock = self.ctx.lock().unwrap();
@@ -336,7 +334,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
         }
 
         // WRITE bytes to slave
@@ -352,7 +350,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
-                return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
+                return Err(X232Error::HAL(ErrorKind::I2cNoAck))
             }
         }
 
@@ -372,7 +370,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(Error::new(ErrorKind::Other, "No ACK from slave"));
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
         }
 
         // READ bytes from slave
