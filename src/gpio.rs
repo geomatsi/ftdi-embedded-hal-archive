@@ -1,8 +1,8 @@
+use crate::error::{X232Error, Result};
 use crate::mpsse::MPSSECmd;
 
 use embedded_hal::digital::v2::OutputPin;
 use std::cell::RefCell;
-use std::convert::Infallible;
 use std::fmt;
 use std::io::{Read, Write};
 use std::sync::Mutex;
@@ -27,11 +27,11 @@ macro_rules! declare_gpio_pin {
     ($pin: ident, $bit: expr, $bank: expr) => {
         pub fn $pin(&self) -> Result<GpioPin> {
             if !*self.$pin.borrow() {
-                return Err(Error::new(ErrorKind::Other, "pin already in use"));
+                return Err(X232Error::HAL(ErrorKind::GpioPinBusy))
             }
 
             if $bit > 7 {
-                return Err(Error::new(ErrorKind::Other, "invalid pin number"));
+                return Err(X232Error::HAL(ErrorKind::GpioInvalidPin))
             }
 
             self.$pin.replace(false);
@@ -99,14 +99,14 @@ impl<'a> GpioPin<'a> {
 }
 
 impl<'a> OutputPin for GpioPin<'a> {
-    type Error = Infallible;
+    type Error = X232Error;
 
-    fn set_low(&mut self) -> Result<(), Self::Error> {
+    fn set_low(&mut self) -> Result<()> {
         self.set_pin(false);
         Ok(())
     }
 
-    fn set_high(&mut self) -> Result<(), Self::Error> {
+    fn set_high(&mut self) -> Result<()> {
         self.set_pin(true);
         Ok(())
     }

@@ -1,10 +1,11 @@
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 pub use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
 
+use crate::error::{X232Error, Result, ErrorKind};
 use crate::mpsse::MPSSECmd;
 
 use std::cell::RefCell;
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use std::io::{Read, Write};
 use std::sync::Mutex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -51,7 +52,7 @@ impl<'a> SpiBus<'a> {
             return Ok(());
         }
 
-        Err(Error::new(ErrorKind::NotFound, "mode not supported"))
+        Err(X232Error::HAL(ErrorKind::SpiModeNotSupported))
     }
 
     pub fn get_mode(&mut self) -> Mode {
@@ -75,7 +76,7 @@ impl<'a> SpiBus<'a> {
 }
 
 impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
-    type Error = Error;
+    type Error = X232Error;
 
     fn transfer<'b>(&mut self, buffer: &'b mut [u8]) -> Result<&'b [u8]> {
         if buffer.is_empty() {
@@ -101,7 +102,7 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
 }
 
 impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
-    type Error = Error;
+    type Error = X232Error;
 
     fn write(&mut self, buffer: &[u8]) -> Result<()> {
         if buffer.is_empty() {
@@ -119,6 +120,8 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
         cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
 
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&cmd)
+        ftdi.write_all(&cmd)?;
+
+        Ok(())
     }
 }
