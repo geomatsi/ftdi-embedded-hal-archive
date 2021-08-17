@@ -143,6 +143,8 @@ impl FTx232H {
             let (div1, div2) = match speed {
                 SpiSpeed::CLK_500kHz => (0x3b, 0x0),
                 SpiSpeed::CLK_1MHz | SpiSpeed::CLK_AUTO => (0x1d, 0x0),
+                SpiSpeed::CLK_2MHz => (0xe, 0x0),
+                SpiSpeed::CLK_2_5MHz => (0xb, 0x0),
                 SpiSpeed::CLK_3MHz => (0x9, 0x0),
                 SpiSpeed::CLK_5MHz => (0x5, 0x0),
                 SpiSpeed::CLK_10MHz => (0x2, 0x0),
