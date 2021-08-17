@@ -4,6 +4,8 @@ pub use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
 use crate::error::{X232Error, Result, ErrorKind};
 use crate::mpsse::MPSSECmd;
 
+use nb;
+
 use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::sync::Mutex;
@@ -121,6 +123,47 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(&cmd)?;
+
+        Ok(())
+    }
+}
+
+impl<'a> embedded_hal::spi::FullDuplex<u8> for SpiBus<'a> {
+    type Error = X232Error;
+
+    fn read(&mut self) -> nb::Result<u8, X232Error> {
+        let mut buffer: [u8; 1] = [0];
+
+        let (sl, sh) = SpiBus::len2cmd(buffer.len());
+        let mut cmd: Vec<u8> = vec![];
+
+        let lock = self.ctx.lock().unwrap();
+        let mut ftdi = lock.borrow_mut();
+
+        cmd.append(&mut vec![self.cmd_rw(), sl, sh]);
+        cmd.append(&mut buffer.to_vec());
+        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
+
+        ftdi.usb_purge_buffers().unwrap();
+        ftdi.write_all(&cmd).unwrap();
+        ftdi.read_exact(&mut buffer).unwrap();
+
+        Ok(buffer[0])
+    }
+
+    fn send(&mut self, byte: u8) -> nb::Result<(), X232Error> {
+        let (sl, sh) = SpiBus::len2cmd(1);
+        let mut cmd: Vec<u8> = vec![];
+
+        let lock = self.ctx.lock().unwrap();
+        let mut ftdi = lock.borrow_mut();
+
+        cmd.append(&mut vec![self.cmd_w.into(), sl, sh]);
+        cmd.append(&mut vec![byte]);
+        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
+
+        ftdi.usb_purge_buffers().unwrap();
+        ftdi.write_all(&cmd).unwrap();
 
         Ok(())
     }
