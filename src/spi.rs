@@ -16,6 +16,8 @@ pub enum SpiSpeed {
     CLK_AUTO,
     CLK_500kHz,
     CLK_1MHz,
+    CLK_2MHz,
+    CLK_2_5MHz,
     CLK_3MHz,
     CLK_5MHz,
     CLK_10MHz,
