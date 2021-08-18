@@ -1,6 +1,6 @@
 #![allow(clippy::identity_op)]
 
-use crate::error::{X232Error, Result, ErrorKind};
+use crate::error::{ErrorKind, Result, X232Error};
 use crate::mpsse::MPSSECmd;
 
 use std::cell::RefCell;
@@ -199,7 +199,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck));
         }
 
         // READ bytes from slave
@@ -265,7 +265,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck));
         }
 
         // WRITE bytes to slave
@@ -281,7 +281,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
-                return Err(X232Error::HAL(ErrorKind::I2cNoAck))
+                return Err(X232Error::HAL(ErrorKind::I2cNoAck));
             }
         }
 
@@ -303,7 +303,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
     fn write_read(&mut self, address: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<()> {
         // FIXME: simplified: do not fallback to Read or Write, just throw error
         if bytes.is_empty() || buffer.is_empty() {
-            return Err(X232Error::HAL(ErrorKind::InvalidParams))
+            return Err(X232Error::HAL(ErrorKind::InvalidParams));
         }
 
         let lock = self.ctx.lock().unwrap();
@@ -334,7 +334,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck));
         }
 
         // WRITE bytes to slave
@@ -350,7 +350,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
-                return Err(X232Error::HAL(ErrorKind::I2cNoAck))
+                return Err(X232Error::HAL(ErrorKind::I2cNoAck));
             }
         }
 
@@ -370,7 +370,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
-            return Err(X232Error::HAL(ErrorKind::I2cNoAck))
+            return Err(X232Error::HAL(ErrorKind::I2cNoAck));
         }
 
         // READ bytes from slave

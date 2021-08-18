@@ -1,7 +1,7 @@
 use ftdi::BitMode;
 pub use ftdi::Interface;
 
-use crate::error::{X232Error, Result, ErrorKind};
+use crate::error::{ErrorKind, Result, X232Error};
 use crate::mpsse::MPSSECmd;
 use crate::mpsse::MPSSECmd_H;
 
@@ -48,7 +48,9 @@ impl FTx232H {
     }
 
     fn init_ctx(vendor: u16, product: u16, intf: ftdi::Interface) -> Result<FTx232H> {
-        let mut device = ftdi::find_by_vid_pid(vendor, product).interface(intf).open()?;
+        let mut device = ftdi::find_by_vid_pid(vendor, product)
+            .interface(intf)
+            .open()?;
 
         device.set_write_chunksize(1024);
         device.set_read_chunksize(1024);
@@ -126,7 +128,7 @@ impl FTx232H {
 
     pub fn spi(&self, speed: SpiSpeed) -> Result<SpiBus> {
         if (*self.i2c.borrow()).is_some() {
-            return Err(X232Error::HAL(ErrorKind::BusBusy))
+            return Err(X232Error::HAL(ErrorKind::BusBusy));
         }
 
         if (*self.spi.borrow()).is_none() {
@@ -155,7 +157,7 @@ impl FTx232H {
         } else if speed != SpiSpeed::CLK_AUTO {
             // clock sanity check
             if Some(speed) != *self.spi.borrow() {
-                return Err(X232Error::HAL(ErrorKind::InvalidClock))
+                return Err(X232Error::HAL(ErrorKind::InvalidClock));
             }
         }
 
@@ -164,7 +166,7 @@ impl FTx232H {
 
     pub fn i2c(&self, speed: I2cSpeed) -> Result<I2cBus> {
         if (*self.spi.borrow()).is_some() {
-            return Err(X232Error::HAL(ErrorKind::BusBusy))
+            return Err(X232Error::HAL(ErrorKind::BusBusy));
         }
 
         if (*self.i2c.borrow()).is_none() {
@@ -187,7 +189,7 @@ impl FTx232H {
         } else if speed != I2cSpeed::CLK_AUTO {
             // clock sanity check
             if Some(speed) != *self.i2c.borrow() {
-                return Err(X232Error::HAL(ErrorKind::InvalidClock))
+                return Err(X232Error::HAL(ErrorKind::InvalidClock));
             }
         }
 

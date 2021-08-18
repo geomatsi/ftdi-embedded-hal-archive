@@ -1,4 +1,4 @@
-use crate::error::{X232Error, Result};
+use crate::error::{Result, X232Error};
 use crate::mpsse::MPSSECmd;
 
 use embedded_hal::digital::v2::OutputPin;
@@ -27,11 +27,11 @@ macro_rules! declare_gpio_pin {
     ($pin: ident, $bit: expr, $bank: expr) => {
         pub fn $pin(&self) -> Result<GpioPin> {
             if !*self.$pin.borrow() {
-                return Err(X232Error::HAL(ErrorKind::GpioPinBusy))
+                return Err(X232Error::HAL(ErrorKind::GpioPinBusy));
             }
 
             if $bit > 7 {
-                return Err(X232Error::HAL(ErrorKind::GpioInvalidPin))
+                return Err(X232Error::HAL(ErrorKind::GpioInvalidPin));
             }
 
             self.$pin.replace(false);
