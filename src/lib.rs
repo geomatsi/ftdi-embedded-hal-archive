@@ -1,9 +1,9 @@
+pub mod error;
 pub mod gpio;
 pub mod i2c;
 pub mod mpsse;
 pub mod spi;
 pub mod x232h;
-pub mod error;
 
 #[cfg(test)]
 mod tests {

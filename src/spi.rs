@@ -1,7 +1,7 @@
 pub use embedded_hal::spi::{Mode, Phase, Polarity};
 pub use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
 
-use crate::error::{X232Error, Result, ErrorKind};
+use crate::error::{ErrorKind, Result, X232Error};
 use crate::mpsse::MPSSECmd;
 
 use nb;
