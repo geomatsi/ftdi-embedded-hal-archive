@@ -1,8 +1,6 @@
-extern crate ftdi_embedded_hal as hal;
-
-use crate::hal::x232h::FTx232H;
-
 use embedded_hal::blocking::spi::Write;
+use ftdi_embedded_hal as hal;
+use hal::x232h::FTx232H;
 use std::thread::sleep;
 use std::time::Duration;
 

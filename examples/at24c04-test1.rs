@@ -1,17 +1,13 @@
-extern crate eeprom24x;
-extern crate ftdi_embedded_hal as hal;
-
 fn main() {
     println!("Run example tests: cargo test --example=at24c04-test1 -- --test-threads=1");
 }
 
 #[cfg(test)]
 mod test {
-    use crate::hal::x232h::FTx232H;
-
     use eeprom24x::Eeprom24x;
     use eeprom24x::SlaveAddr;
-
+    use ftdi_embedded_hal as hal;
+    use ftdi_embedded_hal::x232h::FTx232H;
     use std::thread::sleep;
     use std::time::Duration;
 
