@@ -15,3 +15,7 @@ ftdi = "0.1"
 embedded-nrf24l01 = "0.2.0"
 eeprom24x = "0.3.0"
 lm75 = "0.1.2"
+
+[dev-dependencies.adc-mcp3008]
+git = "https://github.com/geomatsi/adc-mcp3008.git"
+branch = "misc-updates"
