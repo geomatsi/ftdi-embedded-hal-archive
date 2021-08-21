@@ -1,9 +1,6 @@
-extern crate ftdi_embedded_hal as hal;
-
-extern crate embedded_hal;
 use embedded_hal::{blocking::spi::Transfer, digital::v2::OutputPin};
-
-use crate::hal::x232h::FTx232H;
+use ftdi_embedded_hal as hal;
+use hal::x232h::FTx232H;
 
 fn main() {
     let regs: Vec<u8> = vec![0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9];

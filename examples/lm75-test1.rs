@@ -1,10 +1,6 @@
-extern crate ftdi_embedded_hal as hal;
-extern crate lm75;
-
-use crate::hal::x232h::FTx232H;
-
+use ftdi_embedded_hal as hal;
+use hal::x232h::FTx232H;
 use lm75::{Lm75, SlaveAddr};
-
 use std::thread::sleep;
 use std::time::Duration;
 

@@ -1,12 +1,9 @@
-use crate::hal::x232h::FTx232H;
 use embedded_nrf24l01::Configuration;
-use ftdi_embedded_hal as hal;
-
-use embedded_nrf24l01;
 use embedded_nrf24l01::CrcMode;
 use embedded_nrf24l01::DataRate;
 use embedded_nrf24l01::NRF24L01;
-
+use ftdi_embedded_hal as hal;
+use hal::x232h::FTx232H;
 use std::thread::sleep;
 use std::time::Duration;
 
