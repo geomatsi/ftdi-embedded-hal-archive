@@ -1,4 +1,5 @@
 pub mod error;
+pub mod ftdimpsse;
 pub mod gpio;
 pub mod i2c;
 pub mod mpsse;
