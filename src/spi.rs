@@ -2,7 +2,7 @@ pub use embedded_hal::spi::{Mode, Phase, Polarity};
 pub use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
 
 use crate::error::{ErrorKind, Result, X232Error};
-use crate::mpsse::MPSSECmd;
+use crate::ftdimpsse::{ClockData, ClockDataIn, ClockDataOut, MpsseCmdBuilder};
 
 use nb;
 
@@ -27,8 +27,9 @@ pub enum SpiSpeed {
 pub struct SpiBus<'a> {
     ctx: &'a Mutex<RefCell<ftdi::Device>>,
     mode: Mode,
-    cmd_w: MPSSECmd,
-    cmd_r: MPSSECmd,
+    cmd_r: ClockDataIn,
+    cmd_w: ClockDataOut,
+    cmd_rw: ClockData,
 }
 
 impl<'a> SpiBus<'a> {
@@ -36,22 +37,28 @@ impl<'a> SpiBus<'a> {
         SpiBus {
             ctx,
             mode: MODE_0,
-            cmd_r: MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_IN,
-            cmd_w: MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT,
+            cmd_r: ClockDataIn::MsbPos,
+            cmd_w: ClockDataOut::MsbNeg,
+            // cmd_rw = cmd_r | cmd_w
+            cmd_rw: ClockData::MsbPosIn,
         }
     }
 
     pub fn set_mode(&mut self, mode: Mode) -> Result<()> {
         if mode == MODE_0 {
-            self.cmd_r = MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_IN;
-            self.cmd_w = MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_OUT;
+            self.cmd_r = ClockDataIn::MsbPos;
+            self.cmd_w = ClockDataOut::MsbNeg;
+            // cmd_rw = cmd_r | cmd_w
+            self.cmd_rw = ClockData::MsbPosIn;
             self.mode = mode;
             return Ok(());
         }
 
         if mode == MODE_2 {
-            self.cmd_r = MPSSECmd::MSB_FALLING_EDGE_CLK_BYTE_IN;
-            self.cmd_w = MPSSECmd::MSB_RISING_EDGE_CLK_BYTE_OUT;
+            self.cmd_r = ClockDataIn::MsbNeg;
+            self.cmd_w = ClockDataOut::MsbPos;
+            // cmd_rw = cmd_r | cmd_w
+            self.cmd_rw = ClockData::MsbNegIn;
             self.mode = mode;
             return Ok(());
         }
@@ -64,21 +71,6 @@ impl<'a> SpiBus<'a> {
     }
 }
 
-impl<'a> SpiBus<'a> {
-    fn len2cmd(sz: usize) -> (u8, u8) {
-        let sl: u8 = ((sz - 1) & 0xff) as u8;
-        let sh: u8 = (((sz - 1) >> 8) & 0xff) as u8;
-
-        (sl, sh)
-    }
-
-    fn cmd_rw(&self) -> u8 {
-        let a: u8 = self.cmd_r.into();
-        let b: u8 = self.cmd_w.into();
-        a | b
-    }
-}
-
 impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
     type Error = X232Error;
 
@@ -87,18 +79,15 @@ impl<'a> embedded_hal::blocking::spi::Transfer<u8> for SpiBus<'a> {
             return Ok(buffer);
         }
 
-        let (sl, sh) = SpiBus::len2cmd(buffer.len());
-        let mut cmd: Vec<u8> = vec![];
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data(self.cmd_rw, buffer)
+            .send_immediate();
 
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        cmd.append(&mut vec![self.cmd_rw(), sl, sh]);
-        cmd.append(&mut buffer.to_vec());
-        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
-
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&cmd)?;
+        ftdi.write_all(cmd.as_slice())?;
         ftdi.read_exact(buffer)?;
 
         Ok(buffer)
@@ -113,18 +102,15 @@ impl<'a> embedded_hal::blocking::spi::Write<u8> for SpiBus<'a> {
             return Ok(());
         }
 
-        let (sl, sh) = SpiBus::len2cmd(buffer.len());
-        let mut cmd: Vec<u8> = vec![];
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data_out(self.cmd_w, buffer)
+            .send_immediate();
 
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        cmd.append(&mut vec![self.cmd_w.into(), sl, sh]);
-        cmd.append(&mut buffer.to_vec());
-        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
-
         ftdi.usb_purge_buffers()?;
-        ftdi.write_all(&cmd)?;
+        ftdi.write_all(cmd.as_slice())?;
 
         Ok(())
     }
@@ -136,36 +122,35 @@ impl<'a> embedded_hal::spi::FullDuplex<u8> for SpiBus<'a> {
     fn read(&mut self) -> nb::Result<u8, X232Error> {
         let mut buffer: [u8; 1] = [0];
 
-        let (sl, sh) = SpiBus::len2cmd(buffer.len());
-        let mut cmd: Vec<u8> = vec![];
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data(self.cmd_rw, &buffer)
+            .send_immediate();
 
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        cmd.append(&mut vec![self.cmd_rw(), sl, sh]);
-        cmd.append(&mut buffer.to_vec());
-        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
-
-        ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&cmd).unwrap();
-        ftdi.read_exact(&mut buffer).unwrap();
+        ftdi.usb_purge_buffers()
+            .map_err(|e| nb::Error::Other(X232Error::FTDI(e)))?;
+        ftdi.write_all(cmd.as_slice())
+            .map_err(|e| nb::Error::Other(X232Error::Io(e)))?;
+        ftdi.read_exact(&mut buffer)
+            .map_err(|e| nb::Error::Other(X232Error::Io(e)))?;
 
         Ok(buffer[0])
     }
 
     fn send(&mut self, byte: u8) -> nb::Result<(), X232Error> {
-        let (sl, sh) = SpiBus::len2cmd(1);
-        let mut cmd: Vec<u8> = vec![];
+        let cmd: MpsseCmdBuilder = MpsseCmdBuilder::new()
+            .clock_data_out(self.cmd_w, &[byte])
+            .send_immediate();
 
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        cmd.append(&mut vec![self.cmd_w.into(), sl, sh]);
-        cmd.append(&mut vec![byte]);
-        cmd.append(&mut vec![MPSSECmd::SEND_IMMEDIATE_RESP.into()]);
-
-        ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&cmd).unwrap();
+        ftdi.usb_purge_buffers()
+            .map_err(|e| nb::Error::Other(X232Error::FTDI(e)))?;
+        ftdi.write_all(cmd.as_slice())
+            .map_err(|e| nb::Error::Other(X232Error::Io(e)))?;
 
         Ok(())
     }
