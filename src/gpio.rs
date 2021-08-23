@@ -1,5 +1,5 @@
 use crate::error::{Result, X232Error};
-use crate::mpsse::MPSSECmd;
+use crate::ftdimpsse::MpsseCmdBuilder;
 
 use embedded_hal::digital::v2::OutputPin;
 use std::cell::RefCell;
@@ -68,24 +68,20 @@ impl<'a> GpioPin<'a> {
         self.bank
     }
 
-    fn set_pin(&mut self, val: bool) {
-        let (get_cmd, set_cmd, dir) = match self.bank {
-            PinBank::Low => (MPSSECmd::GET_BITS_LOW, MPSSECmd::SET_BITS_LOW, 0b1111_1011),
-            PinBank::High => (
-                MPSSECmd::GET_BITS_HIGH,
-                MPSSECmd::SET_BITS_HIGH,
-                0b1111_1111,
-            ),
-        };
+    fn set_pin(&mut self, val: bool) -> Result<()> {
+        let mut value: [u8; 1] = [0];
 
-        let mut value: Vec<u8> = vec![0];
+        let read = match self.bank {
+            PinBank::Low => MpsseCmdBuilder::new().gpio_lower().send_immediate(),
+            PinBank::High => MpsseCmdBuilder::new().gpio_upper().send_immediate(),
+        };
 
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&[get_cmd.into()]).unwrap();
-        ftdi.read_exact(&mut value).unwrap();
+        ftdi.usb_purge_buffers()?;
+        ftdi.write_all(read.as_slice())?;
+        ftdi.read_exact(&mut value)?;
 
         let v = if val {
             value[0] | (1 << self.bit)
@@ -93,8 +89,19 @@ impl<'a> GpioPin<'a> {
             value[0] & (!(1 << self.bit))
         };
 
-        ftdi.usb_purge_buffers().unwrap();
-        ftdi.write_all(&[set_cmd.into(), v, dir]).unwrap();
+        let write = match self.bank {
+            PinBank::Low => MpsseCmdBuilder::new()
+                .set_gpio_lower(v, 0b1111_1011)
+                .send_immediate(),
+            PinBank::High => MpsseCmdBuilder::new()
+                .set_gpio_upper(v, 0b1111_1111)
+                .send_immediate(),
+        };
+
+        ftdi.usb_purge_buffers()?;
+        ftdi.write_all(write.as_slice())?;
+
+        Ok(())
     }
 }
 
@@ -102,12 +109,12 @@ impl<'a> OutputPin for GpioPin<'a> {
     type Error = X232Error;
 
     fn set_low(&mut self) -> Result<()> {
-        self.set_pin(false);
+        self.set_pin(false)?;
         Ok(())
     }
 
     fn set_high(&mut self) -> Result<()> {
-        self.set_pin(true);
+        self.set_pin(true)?;
         Ok(())
     }
 }
