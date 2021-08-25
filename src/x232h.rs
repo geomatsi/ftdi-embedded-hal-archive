@@ -2,9 +2,9 @@ use ftdi::BitMode;
 pub use ftdi::Interface;
 
 use crate::error::{ErrorKind, Result, X232Error};
-use crate::mpsse::MPSSECmd;
-use crate::mpsse::MPSSECmd_H;
 
+use crate::ftdimpsse::MpsseCmd;
+use crate::ftdimpsse::MpsseCmdBuilder;
 use crate::gpio::GpioPin;
 use crate::gpio::PinBank;
 use crate::i2c::I2cBus;
@@ -59,24 +59,21 @@ impl FTx232H {
         device.set_bitmode(0, BitMode::Mpsse)?;
         device.usb_purge_buffers()?;
 
-        // clock settings:
+        // Device settings:
         // - disable DIV_5 => 60MHz
         // - disable adaptive clocking
         // - disable 3-phase clocking
-        device.write_all(&[MPSSECmd_H::DISABLE_DIV_5_CLK.into()])?;
-        device.write_all(&[MPSSECmd_H::DISABLE_ADAPTIVE_CLK.into()])?;
-        device.write_all(&[MPSSECmd_H::DISABLE_3_PHASE_CLK.into()])?;
-
-        // disable loopback
-        device.write_all(&[MPSSECmd::LOOPBACK_DISABLE.into()])?;
-
-        // FIXME: current approach is limited: fixed in/out pin configuration:
+        // - disable loopback
         // - low bits: all outputs(0)
-        device.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1111])?;
-
         // FIXME: current approach is limited: fixed in/out pin configuration:
-        // - high bits: all outputs(0)
-        device.write_all(&[MPSSECmd::SET_BITS_HIGH.into(), 0x0, 0b1111_1111])?;
+        let cmd_init = MpsseCmdBuilder::with_vec(vec![MpsseCmd::DisableClockDivide.into()])
+            .disable_adaptive_data_clocking()
+            .disable_3phase_data_clocking()
+            .disable_loopback()
+            .set_gpio_lower(0x0, 0b1111_1111)
+            .set_gpio_upper(0x0, 0b1111_1111);
+
+        device.write_all(cmd_init.as_slice())?;
 
         let d = FTx232H {
             mtx: Mutex::new(RefCell::new(device)),
@@ -107,15 +104,15 @@ impl FTx232H {
         self.loopback = lp;
 
         let cmd = if lp {
-            MPSSECmd::LOOPBACK_ENABLE
+            MpsseCmdBuilder::new().enable_loopback()
         } else {
-            MPSSECmd::LOOPBACK_DISABLE
+            MpsseCmdBuilder::new().disable_loopback()
         };
 
         let lock = self.mtx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.write_all(&[cmd.into()])?;
+        ftdi.write_all(cmd.as_slice())?;
 
         Ok(())
     }
@@ -138,7 +135,11 @@ impl FTx232H {
             self.spi.replace(Some(speed));
 
             // SPI: DI - input, DO - output(0), SK - output(0)
-            ftdi.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1011])?;
+            ftdi.write_all(
+                MpsseCmdBuilder::new()
+                    .set_gpio_lower(0x0, 0b1111_1011)
+                    .as_slice(),
+            )?;
 
             // FIXME: set fixed speed 1MHz for all devices assuming 60MHz clock
             // SCK_freq = 60MHz / ((1 + (div1 | (div2 << 8))) * 2)
@@ -153,7 +154,10 @@ impl FTx232H {
                 SpiSpeed::CLK_20MHz => (0x1, 0x0),
             };
 
-            ftdi.write_all(&[MPSSECmd::TCK_DIVISOR.into(), div1, div2])?;
+            ftdi.write_all(
+                MpsseCmdBuilder::with_vec(vec![MpsseCmd::SetClockFrequency.into(), div1, div2])
+                    .as_slice(),
+            )?;
         } else if speed != SpiSpeed::CLK_AUTO {
             // clock sanity check
             if Some(speed) != *self.spi.borrow() {
@@ -176,7 +180,11 @@ impl FTx232H {
             self.i2c.replace(Some(speed));
 
             // I2C: DI - input, DO - output(0), SK - output(0)
-            ftdi.write_all(&[MPSSECmd::SET_BITS_LOW.into(), 0x0, 0b1111_1011])?;
+            ftdi.write_all(
+                MpsseCmdBuilder::new()
+                    .set_gpio_lower(0x0, 0b1111_1011)
+                    .as_slice(),
+            )?;
 
             // FIXME: set fixed speed 1MHz for all devices assuming 60MHz clock
             // SCK_freq = 60MHz / ((1 + (div1 | (div2 << 8))) * 2)
@@ -185,7 +193,10 @@ impl FTx232H {
                 I2cSpeed::CLK_400kHz => (0x4a, 0x0),
             };
 
-            ftdi.write_all(&[MPSSECmd::TCK_DIVISOR.into(), div1, div2])?;
+            ftdi.write_all(
+                MpsseCmdBuilder::with_vec(vec![MpsseCmd::SetClockFrequency.into(), div1, div2])
+                    .as_slice(),
+            )?;
         } else if speed != I2cSpeed::CLK_AUTO {
             // clock sanity check
             if Some(speed) != *self.i2c.borrow() {

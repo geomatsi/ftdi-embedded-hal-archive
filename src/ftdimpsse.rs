@@ -46,6 +46,10 @@ pub enum MpsseCmd {
     Enable3PhaseClocking = 0x8C,
     /// Used by [`disable_3phase_data_clocking`][`MpsseCmdBuilder::disable_3phase_data_clocking`].
     Disable3PhaseClocking = 0x8D,
+    /// Used by [`disable_adaptive_data_clocking`][`MpsseCmdBuilder::disable_adaptive_data_clocking`].
+    EnableAdaptiveClocking = 0x96,
+    /// Used by [`enable_adaptive_data_clocking`][`MpsseCmdBuilder::enable_adaptive_data_clocking`].
+    DisableAdaptiveClocking = 0x97,
     // EnableDriveOnlyZero = 0x9E,
 }
 
@@ -503,6 +507,22 @@ impl MpsseCmdBuilder {
     /// ```
     pub fn enable_3phase_data_clocking(mut self) -> Self {
         self.0.push(MpsseCmd::Enable3PhaseClocking.into());
+        self
+    }
+
+    /// Enable adaptive data clocking.
+    ///
+    /// This is only available on FTx232H devices.
+    pub fn enable_adaptive_data_clocking(mut self) -> Self {
+        self.0.push(MpsseCmd::EnableAdaptiveClocking.into());
+        self
+    }
+
+    /// Enable adaptive data clocking.
+    ///
+    /// This is only available on FTx232H devices.
+    pub fn disable_adaptive_data_clocking(mut self) -> Self {
+        self.0.push(MpsseCmd::DisableAdaptiveClocking.into());
         self
     }
 
@@ -1016,6 +1036,12 @@ macro_rules! mpsse {
     };
     ($passthru:tt {disable_3phase_data_clocking(); $($tail:tt)*} -> [$($out:tt)*]) => {
         mpsse!($passthru {$($tail)*} -> [$($out)* $crate::MpsseCmd::Disable3PhaseClocking as u8,]);
+    };
+    ($passthru:tt {enable_adaptive_data_clocking(); $($tail:tt)*} -> [$($out:tt)*]) => {
+        mpsse!($passthru {$($tail)*} -> [$($out)* $crate::MpsseCmd::EnableDataClocking as u8,]);
+    };
+    ($passthru:tt {disable_adaptive_data_clocking(); $($tail:tt)*} -> [$($out:tt)*]) => {
+        mpsse!($passthru {$($tail)*} -> [$($out)* $crate::MpsseCmd::DisableDataClocking as u8,]);
     };
     ($passthru:tt {set_gpio_lower($state:expr, $direction:expr); $($tail:tt)*} -> [$($out:tt)*]) => {
         mpsse!($passthru {$($tail)*} -> [$($out)* $crate::MpsseCmd::SetDataBitsLowbyte as u8, $state as u8, $direction as u8,]);
