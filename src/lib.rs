@@ -2,7 +2,6 @@ pub mod error;
 pub mod ftdimpsse;
 pub mod gpio;
 pub mod i2c;
-pub mod mpsse;
 pub mod spi;
 pub mod x232h;
 
