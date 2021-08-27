@@ -2,10 +2,9 @@ pub use embedded_hal::spi::{Mode, Phase, Polarity};
 pub use embedded_hal::spi::{MODE_0, MODE_1, MODE_2, MODE_3};
 
 use crate::error::{ErrorKind, Result, X232Error};
-use crate::ftdimpsse::{ClockData, ClockDataIn, ClockDataOut, MpsseCmdBuilder};
 
+use ftdi_mpsse::{ClockData, ClockDataIn, ClockDataOut, MpsseCmdBuilder};
 use nb;
-
 use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::sync::Mutex;

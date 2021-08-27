@@ -3,14 +3,15 @@ pub use ftdi::Interface;
 
 use crate::error::{ErrorKind, Result, X232Error};
 
-use crate::ftdimpsse::MpsseCmd;
-use crate::ftdimpsse::MpsseCmdBuilder;
 use crate::gpio::GpioPin;
 use crate::gpio::PinBank;
 use crate::i2c::I2cBus;
 use crate::i2c::I2cSpeed;
 use crate::spi::SpiBus;
 use crate::spi::SpiSpeed;
+
+use ftdi_mpsse::MpsseCmd;
+use ftdi_mpsse::MpsseCmdBuilder;
 
 use std::cell::RefCell;
 use std::io::Write;

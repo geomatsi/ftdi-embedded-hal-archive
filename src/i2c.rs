@@ -1,8 +1,8 @@
 #![allow(clippy::identity_op)]
 
 use crate::error::{ErrorKind, Result, X232Error};
-use crate::ftdimpsse::{ClockBitsIn, ClockDataIn, ClockDataOut, MpsseCmdBuilder};
 
+use ftdi_mpsse::{ClockBitsIn, ClockDataIn, ClockDataOut, MpsseCmdBuilder};
 use std::cell::RefCell;
 use std::io::{Read, Write};
 use std::sync::Mutex;

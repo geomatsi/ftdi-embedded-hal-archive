@@ -1,7 +1,7 @@
 use crate::error::{Result, X232Error};
-use crate::ftdimpsse::MpsseCmdBuilder;
 
 use embedded_hal::digital::v2::OutputPin;
+use ftdi_mpsse::MpsseCmdBuilder;
 use std::cell::RefCell;
 use std::fmt;
 use std::io::{Read, Write};
