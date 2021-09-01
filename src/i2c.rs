@@ -2,9 +2,8 @@
 
 use crate::error::{ErrorKind, Result, X232Error};
 
-use ftdi_mpsse::{ClockBitsIn, ClockDataIn, ClockDataOut, MpsseCmdBuilder};
+use ftdi_mpsse::{ClockBitsIn, ClockDataIn, ClockDataOut, MpsseCmdBuilder, MpsseCmdExecutor};
 use std::cell::RefCell;
-use std::io::{Read, Write};
 use std::sync::Mutex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -13,14 +12,20 @@ pub enum I2cSpeed {
     CLK_AUTO,
     CLK_100kHz,
     CLK_400kHz,
+pub struct I2cBus<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
+    ctx: &'a Mutex<RefCell<T>>,
 }
 
-pub struct I2cBus<'a> {
-    ctx: &'a Mutex<RefCell<ftdi::Device>>,
-}
-
-impl<'a> I2cBus<'a> {
-    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Device>>) -> I2cBus {
+impl<'a, T> I2cBus<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
+    pub fn new(ctx: &'a Mutex<RefCell<T>>) -> I2cBus<T> {
         I2cBus { ctx }
     }
 }
@@ -101,7 +106,11 @@ fn i2c_read_byte(cmd: MpsseCmdBuilder, nack: bool, pins: u8) -> MpsseCmdBuilder 
         .send_immediate()
 }
 
-impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
+impl<'a, T> embedded_hal::blocking::i2c::Read for I2cBus<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
     type Error = X232Error;
 
     fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<()> {
@@ -118,9 +127,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         let mut ack: Vec<u8> = vec![0];
 
         // get current state of low pins
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd_read_low_pins.as_slice())?;
-        ftdi.read_exact(&mut pins)?;
+        ftdi.mpsse_xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
 
         // ST: send using bit-banging
         cmd = i2c_start(cmd, pins[0]);
@@ -129,9 +136,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         cmd = i2c_write_byte_ack(cmd, i2c_read_from(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd.as_slice())?;
-        ftdi.read_exact(&mut ack)?;
+        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -146,9 +151,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
 
             cmd = i2c_read_byte(cmd, nack, pins[0]);
 
-            ftdi.usb_purge_buffers()?;
-            ftdi.write_all(cmd.as_slice())?;
-            ftdi.read_exact(&mut data)?;
+            ftdi.mpsse_xfer(cmd.as_slice(), &mut data)?;
 
             buffer[i] = data[0];
         }
@@ -156,16 +159,19 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         let mut cmd = MpsseCmdBuilder::new();
 
         // SP: send using bit-banging
-        cmd = self.i2c_stop(cmd, pins[0]);
+        cmd = i2c_stop(cmd, pins[0]);
 
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd.as_slice())?;
+        ftdi.mpsse_send(cmd.as_slice())?;
 
         Ok(())
     }
 }
 
-impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
+impl<'a, T> embedded_hal::blocking::i2c::Write for I2cBus<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
     type Error = X232Error;
 
     fn write(&mut self, address: u8, bytes: &[u8]) -> Result<()> {
@@ -182,9 +188,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         let mut ack: Vec<u8> = vec![0];
 
         // get current state of low pins
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd_read_low_pins.as_slice())?;
-        ftdi.read_exact(&mut pins)?;
+        ftdi.mpsse_xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
 
         // ST: send using bit-banging
         cmd = i2c_start(cmd, pins[0]);
@@ -193,9 +197,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         cmd = i2c_write_byte_ack(cmd, i2c_write_to(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd.as_slice())?;
-        ftdi.read_exact(&mut ack)?;
+        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -209,9 +211,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
             cmd = i2c_write_byte_ack(cmd, *byte, pins[0]);
 
             // send command and read back one bit
-            ftdi.usb_purge_buffers()?;
-            ftdi.write_all(cmd.as_slice())?;
-            ftdi.read_exact(&mut ack)?;
+            ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
@@ -224,14 +224,17 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         // SP: send using bit-banging
         cmd = i2c_stop(cmd, pins[0]);
 
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd.as_slice())?;
+        ftdi.mpsse_send(cmd.as_slice())?;
 
         Ok(())
     }
 }
 
-impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
+impl<'a, T> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
     type Error = X232Error;
 
     fn write_read(&mut self, address: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<()> {
@@ -249,9 +252,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         let mut ack: Vec<u8> = vec![0];
 
         // get current state of low pins
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd_read_low_pins.as_slice())?;
-        ftdi.read_exact(&mut pins)?;
+        ftdi.mpsse_xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
 
         // ST: send using bit-banging
         cmd = i2c_start(cmd, pins[0]);
@@ -260,9 +261,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         cmd = i2c_write_byte_ack(cmd, i2c_write_to(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd.as_slice())?;
-        ftdi.read_exact(&mut ack)?;
+        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -276,9 +275,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
             cmd = i2c_write_byte_ack(cmd, *byte, pins[0]);
 
             // send command and read back one bit
-            ftdi.usb_purge_buffers()?;
-            ftdi.write_all(cmd.as_slice())?;
-            ftdi.read_exact(&mut ack)?;
+            ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
@@ -296,9 +293,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         cmd = i2c_write_byte_ack(cmd, i2c_read_from(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd.as_slice())?;
-        ftdi.read_exact(&mut ack)?;
+        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -313,9 +308,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
 
             cmd = i2c_read_byte(cmd, nack, pins[0]);
 
-            ftdi.usb_purge_buffers()?;
-            ftdi.write_all(cmd.as_slice())?;
-            ftdi.read_exact(&mut data)?;
+            ftdi.mpsse_xfer(cmd.as_slice(), &mut data)?;
 
             buffer[i] = data[0];
         }
@@ -325,8 +318,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         // SP: send using bit-banging
         cmd = i2c_stop(cmd, pins[0]);
 
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(cmd.as_slice())?;
+        ftdi.mpsse_send(cmd.as_slice())?;
 
         Ok(())
     }

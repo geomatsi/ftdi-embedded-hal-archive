@@ -2,9 +2,9 @@ use crate::error::{Result, X232Error};
 
 use embedded_hal::digital::v2::OutputPin;
 use ftdi_mpsse::MpsseCmdBuilder;
+use ftdi_mpsse::MpsseCmdExecutor;
 use std::cell::RefCell;
 use std::fmt;
-use std::io::{Read, Write};
 use std::sync::Mutex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -25,7 +25,7 @@ impl fmt::Display for PinBank {
 #[macro_export]
 macro_rules! declare_gpio_pin {
     ($pin: ident, $bit: expr, $bank: expr) => {
-        pub fn $pin(&self) -> Result<GpioPin> {
+        pub fn $pin(&self) -> Result<GpioPin<T>> {
             if !*self.$pin.borrow() {
                 return Err(X232Error::HAL(ErrorKind::GpioPinBusy));
             }
@@ -40,13 +40,21 @@ macro_rules! declare_gpio_pin {
     };
 }
 
-pub struct GpioPin<'a> {
-    ctx: &'a Mutex<RefCell<ftdi::Device>>,
+pub struct GpioPin<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
+    ctx: &'a Mutex<RefCell<T>>,
     bank: PinBank,
     bit: u8,
 }
 
-impl<'a> fmt::Display for GpioPin<'a> {
+impl<'a, T> fmt::Display for GpioPin<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.bank {
             PinBank::Low => write!(f, "P{}{}", self.bank, self.bit - 4),
@@ -55,8 +63,12 @@ impl<'a> fmt::Display for GpioPin<'a> {
     }
 }
 
-impl<'a> GpioPin<'a> {
-    pub fn new(ctx: &'a Mutex<RefCell<ftdi::Device>>, bit: u8, bank: PinBank) -> GpioPin {
+impl<'a, T> GpioPin<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
+    pub fn new(ctx: &'a Mutex<RefCell<T>>, bit: u8, bank: PinBank) -> GpioPin<T> {
         GpioPin { ctx, bank, bit }
     }
 
@@ -79,9 +91,7 @@ impl<'a> GpioPin<'a> {
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(read.as_slice())?;
-        ftdi.read_exact(&mut value)?;
+        ftdi.mpsse_xfer(read.as_slice(), &mut value)?;
 
         let v = if val {
             value[0] | (1 << self.bit)
@@ -98,14 +108,17 @@ impl<'a> GpioPin<'a> {
                 .send_immediate(),
         };
 
-        ftdi.usb_purge_buffers()?;
-        ftdi.write_all(write.as_slice())?;
+        ftdi.mpsse_send(write.as_slice())?;
 
         Ok(())
     }
 }
 
-impl<'a> OutputPin for GpioPin<'a> {
+impl<'a, T> OutputPin for GpioPin<'a, T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
     type Error = X232Error;
 
     fn set_low(&mut self) -> Result<()> {

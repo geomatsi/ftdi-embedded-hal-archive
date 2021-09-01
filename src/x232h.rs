@@ -1,6 +1,3 @@
-use ftdi::BitMode;
-pub use ftdi::Interface;
-
 use crate::error::{ErrorKind, Result, X232Error};
 
 use crate::gpio::GpioPin;
@@ -12,13 +9,18 @@ use crate::spi::SpiSpeed;
 
 use ftdi_mpsse::MpsseCmd;
 use ftdi_mpsse::MpsseCmdBuilder;
+use ftdi_mpsse::MpsseCmdExecutor;
+use ftdi_mpsse::MpsseSettings;
 
 use std::cell::RefCell;
-use std::io::Write;
 use std::sync::Mutex;
 
-pub struct FTx232H {
-    mtx: Mutex<RefCell<ftdi::Device>>,
+pub struct FTx232H<T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
+    mtx: Mutex<RefCell<T>>,
     loopback: bool,
 
     i2c: RefCell<Option<I2cSpeed>>,
@@ -39,27 +41,20 @@ pub struct FTx232H {
     ph7: RefCell<bool>,
 }
 
-impl FTx232H {
-    pub fn init(vendor: u16, product: u16) -> Result<FTx232H> {
-        FTx232H::init_ctx(vendor, product, ftdi::Interface::A)
+impl<T> FTx232H<T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
+    pub fn init(device: T, frequency: u32) -> Result<FTx232H<T>> {
+        let mut settings: MpsseSettings = MpsseSettings::default();
+        settings.clock_frequency = Some(frequency);
+
+        FTx232H::init_full(device, settings)
     }
 
-    pub fn init_chan(vendor: u16, product: u16, intf: ftdi::Interface) -> Result<FTx232H> {
-        FTx232H::init_ctx(vendor, product, intf)
-    }
-
-    fn init_ctx(vendor: u16, product: u16, intf: ftdi::Interface) -> Result<FTx232H> {
-        let mut device = ftdi::find_by_vid_pid(vendor, product)
-            .interface(intf)
-            .open()?;
-
-        device.set_write_chunksize(1024);
-        device.set_read_chunksize(1024);
-        device.usb_reset()?;
-        device.set_latency_timer(5)?;
-        device.set_bitmode(0, BitMode::Mpsse)?;
-        device.usb_purge_buffers()?;
-
+    pub fn init_full(mut device: T, settings: MpsseSettings) -> Result<FTx232H<T>> {
+        device.mpsse_init(&settings)?;
         // Device settings:
         // - disable DIV_5 => 60MHz
         // - disable adaptive clocking
@@ -74,7 +69,7 @@ impl FTx232H {
             .set_gpio_lower(0x0, 0b1111_1111)
             .set_gpio_upper(0x0, 0b1111_1111);
 
-        device.write_all(cmd_init.as_slice())?;
+        device.mpsse_send(cmd_init.as_slice())?;
 
         let d = FTx232H {
             mtx: Mutex::new(RefCell::new(device)),
@@ -113,7 +108,7 @@ impl FTx232H {
         let lock = self.mtx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.write_all(cmd.as_slice())?;
+        ftdi.mpsse_send(cmd.as_slice())?;
 
         Ok(())
     }
@@ -124,7 +119,7 @@ impl FTx232H {
 
     // spi/i2c buses
 
-    pub fn spi(&self, speed: SpiSpeed) -> Result<SpiBus> {
+    pub fn spi(&self) -> Result<SpiBus<T>> {
         if (*self.i2c.borrow()).is_some() {
             return Err(X232Error::HAL(ErrorKind::BusBusy));
         }
@@ -136,7 +131,7 @@ impl FTx232H {
             self.spi.replace(Some(speed));
 
             // SPI: DI - input, DO - output(0), SK - output(0)
-            ftdi.write_all(
+            ftdi.mpsse_send(
                 MpsseCmdBuilder::new()
                     .set_gpio_lower(0x0, 0b1111_1011)
                     .as_slice(),
@@ -169,7 +164,7 @@ impl FTx232H {
         Ok(SpiBus::new(&self.mtx))
     }
 
-    pub fn i2c(&self, speed: I2cSpeed) -> Result<I2cBus> {
+    pub fn i2c(&self) -> Result<I2cBus<T>> {
         if (*self.spi.borrow()).is_some() {
             return Err(X232Error::HAL(ErrorKind::BusBusy));
         }
@@ -181,7 +176,7 @@ impl FTx232H {
             self.i2c.replace(Some(speed));
 
             // I2C: DI - input, DO - output(0), SK - output(0)
-            ftdi.write_all(
+            ftdi.mpsse_send(
                 MpsseCmdBuilder::new()
                     .set_gpio_lower(0x0, 0b1111_1011)
                     .as_slice(),
@@ -225,14 +220,18 @@ impl FTx232H {
     crate::declare_gpio_pin!(ph7, 7, PinBank::High);
 }
 
-impl Drop for FTx232H {
+impl<T> Drop for FTx232H<T>
+where
+    T: MpsseCmdExecutor,
+    X232Error: From<<T as MpsseCmdExecutor>::Error>,
+{
     fn drop(&mut self) {
         let lock = match self.mtx.lock() {
             Ok(guard) => guard,
             Err(poisoned) => poisoned.into_inner(),
         };
-        let mut ftdi = lock.borrow_mut();
 
-        ftdi.usb_purge_buffers().unwrap();
+        //let mut ftdi = lock.borrow_mut();
+        //ftdi.usb_purge_buffers().unwrap();
     }
 }
