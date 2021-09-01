@@ -8,19 +8,6 @@ use nb;
 use std::cell::RefCell;
 use std::sync::Mutex;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[allow(non_camel_case_types)]
-pub enum SpiSpeed {
-    CLK_AUTO,
-    CLK_500kHz,
-    CLK_1MHz,
-    CLK_2MHz,
-    CLK_2_5MHz,
-    CLK_3MHz,
-    CLK_5MHz,
-    CLK_10MHz,
-    CLK_20MHz,
-}
 pub struct SpiBus<'a, T>
 where
     T: MpsseCmdExecutor,

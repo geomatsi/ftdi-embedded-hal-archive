@@ -6,12 +6,6 @@ use ftdi_mpsse::{ClockBitsIn, ClockDataIn, ClockDataOut, MpsseCmdBuilder, MpsseC
 use std::cell::RefCell;
 use std::sync::Mutex;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[allow(non_camel_case_types)]
-pub enum I2cSpeed {
-    CLK_AUTO,
-    CLK_100kHz,
-    CLK_400kHz,
 pub struct I2cBus<'a, T>
 where
     T: MpsseCmdExecutor,

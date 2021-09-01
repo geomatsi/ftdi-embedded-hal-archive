@@ -3,9 +3,7 @@ use crate::error::{ErrorKind, Result, X232Error};
 use crate::gpio::GpioPin;
 use crate::gpio::PinBank;
 use crate::i2c::I2cBus;
-use crate::i2c::I2cSpeed;
 use crate::spi::SpiBus;
-use crate::spi::SpiSpeed;
 
 use ftdi_mpsse::MpsseCmd;
 use ftdi_mpsse::MpsseCmdBuilder;
@@ -23,8 +21,8 @@ where
     mtx: Mutex<RefCell<T>>,
     loopback: bool,
 
-    i2c: RefCell<Option<I2cSpeed>>,
-    spi: RefCell<Option<SpiSpeed>>,
+    i2c: RefCell<Option<bool>>,
+    spi: RefCell<Option<bool>>,
 
     pl0: RefCell<bool>,
     pl1: RefCell<bool>,
@@ -128,7 +126,7 @@ where
             let lock = self.mtx.lock().unwrap();
             let mut ftdi = lock.borrow_mut();
 
-            self.spi.replace(Some(speed));
+            self.spi.replace(Some(true));
 
             // SPI: DI - input, DO - output(0), SK - output(0)
             ftdi.mpsse_send(
@@ -136,29 +134,6 @@ where
                     .set_gpio_lower(0x0, 0b1111_1011)
                     .as_slice(),
             )?;
-
-            // FIXME: set fixed speed 1MHz for all devices assuming 60MHz clock
-            // SCK_freq = 60MHz / ((1 + (div1 | (div2 << 8))) * 2)
-            let (div1, div2) = match speed {
-                SpiSpeed::CLK_500kHz => (0x3b, 0x0),
-                SpiSpeed::CLK_1MHz | SpiSpeed::CLK_AUTO => (0x1d, 0x0),
-                SpiSpeed::CLK_2MHz => (0xe, 0x0),
-                SpiSpeed::CLK_2_5MHz => (0xb, 0x0),
-                SpiSpeed::CLK_3MHz => (0x9, 0x0),
-                SpiSpeed::CLK_5MHz => (0x5, 0x0),
-                SpiSpeed::CLK_10MHz => (0x2, 0x0),
-                SpiSpeed::CLK_20MHz => (0x1, 0x0),
-            };
-
-            ftdi.write_all(
-                MpsseCmdBuilder::with_vec(vec![MpsseCmd::SetClockFrequency.into(), div1, div2])
-                    .as_slice(),
-            )?;
-        } else if speed != SpiSpeed::CLK_AUTO {
-            // clock sanity check
-            if Some(speed) != *self.spi.borrow() {
-                return Err(X232Error::HAL(ErrorKind::InvalidClock));
-            }
         }
 
         Ok(SpiBus::new(&self.mtx))
@@ -173,7 +148,7 @@ where
             let lock = self.mtx.lock().unwrap();
             let mut ftdi = lock.borrow_mut();
 
-            self.i2c.replace(Some(speed));
+            self.i2c.replace(Some(true));
 
             // I2C: DI - input, DO - output(0), SK - output(0)
             ftdi.mpsse_send(
@@ -181,23 +156,6 @@ where
                     .set_gpio_lower(0x0, 0b1111_1011)
                     .as_slice(),
             )?;
-
-            // FIXME: set fixed speed 1MHz for all devices assuming 60MHz clock
-            // SCK_freq = 60MHz / ((1 + (div1 | (div2 << 8))) * 2)
-            let (div1, div2) = match speed {
-                I2cSpeed::CLK_100kHz | I2cSpeed::CLK_AUTO => (0x2b, 0x1),
-                I2cSpeed::CLK_400kHz => (0x4a, 0x0),
-            };
-
-            ftdi.write_all(
-                MpsseCmdBuilder::with_vec(vec![MpsseCmd::SetClockFrequency.into(), div1, div2])
-                    .as_slice(),
-            )?;
-        } else if speed != I2cSpeed::CLK_AUTO {
-            // clock sanity check
-            if Some(speed) != *self.i2c.borrow() {
-                return Err(X232Error::HAL(ErrorKind::InvalidClock));
-            }
         }
 
         Ok(I2cBus::new(&self.mtx))
