@@ -3,17 +3,37 @@ use embedded_nrf24l01::CrcMode;
 use embedded_nrf24l01::DataRate;
 use embedded_nrf24l01::NRF24L01;
 use ftdi_embedded_hal as hal;
-use hal::x232h::FTx232H;
 use std::thread::sleep;
 use std::time::Duration;
 
 // Simple Tx test for embedded-nrf24l01 crate
 
 fn main() {
-    let dev = FTx232H::init(0x0403, 0x6014).unwrap();
-    let spidev = dev.spi(hal::spi::SpiSpeed::CLK_1MHz).unwrap();
-    let ce = dev.pl1().unwrap();
-    let cs = dev.pl2().unwrap();
+    #[cfg(all(feature = "ftdi-lib", feature = "ftd2-lib"))]
+    compile_error!("features 'ftdi-lib' and 'ftd2-lib' cannot be enabled at the same time");
+
+    #[cfg(not(any(feature = "ftdi-lib", feature = "ftd2-lib")))]
+    compile_error!("one of features 'ftdi-lib' and 'ftd2-lib' shall be enabled");
+
+    #[cfg(feature = "ftdi-lib")]
+    let device = {
+        let mut d = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
+
+        // TODO: set clocks in mpsse_init
+        d.set_mpsse_clock(ftdi::MpsseClock::CLK_1MHz).unwrap();
+        d
+    };
+
+    #[cfg(feature = "ftd2-lib")]
+    let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+
+    let hal = hal::x232h::FTx232H::init(device, 1_000_000).unwrap();
+    let spidev = hal.spi().unwrap();
+    let ce = hal.pl1().unwrap();
+    let cs = hal.pl2().unwrap();
 
     // nRF24L01 setup
     let mut nrf = NRF24L01::new(ce, cs, spidev).unwrap();

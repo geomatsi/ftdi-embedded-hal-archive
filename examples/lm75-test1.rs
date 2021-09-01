@@ -1,12 +1,32 @@
 use ftdi_embedded_hal as hal;
-use hal::x232h::FTx232H;
 use lm75::{Lm75, SlaveAddr};
 use std::thread::sleep;
 use std::time::Duration;
 
 fn main() {
-    let dev = FTx232H::init(0x0403, 0x6010).unwrap();
-    let i2c = dev.i2c(hal::i2c::I2cSpeed::CLK_400kHz).unwrap();
+    #[cfg(all(feature = "ftdi-lib", feature = "ftd2-lib"))]
+    compile_error!("features 'ftdi-lib' and 'ftd2-lib' cannot be enabled at the same time");
+
+    #[cfg(not(any(feature = "ftdi-lib", feature = "ftd2-lib")))]
+    compile_error!("one of features 'ftdi-lib' and 'ftd2-lib' shall be enabled");
+
+    #[cfg(feature = "ftdi-lib")]
+    let device = {
+        let mut d = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
+
+        // TODO: set clocks in mpsse_init
+        d.set_mpsse_clock(ftdi::MpsseClock::CLK_400kHz).unwrap();
+        d
+    };
+
+    #[cfg(feature = "ftd2-lib")]
+    let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
+
+    let hal = hal::x232h::FTx232H::init(device, 400_000).unwrap();
+    let i2c = hal.i2c().unwrap();
     let mut sensor = Lm75::new(i2c, SlaveAddr::default());
     let delay = Duration::from_secs(1);
 

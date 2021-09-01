@@ -20,3 +20,9 @@ lm75 = "0.1.2"
 [dev-dependencies.adc-mcp3008]
 git = "https://github.com/geomatsi/adc-mcp3008.git"
 branch = "misc-updates"
+
+# features only for tests: select ftdi-rs or libftd2xx-rs
+[features]
+ftd2-lib = []
+ftdi-lib = []
+default = []
