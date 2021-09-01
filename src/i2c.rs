@@ -25,84 +25,80 @@ impl<'a> I2cBus<'a> {
     }
 }
 
-impl<'a> I2cBus<'a> {
-    fn i2c_write_to(addr: u8) -> u8 {
-        (addr << 1) | 0x0
-    }
-
-    fn i2c_read_from(addr: u8) -> u8 {
-        (addr << 1) | 0x1
-    }
+fn i2c_write_to(addr: u8) -> u8 {
+    (addr << 1) | 0x0
 }
 
-impl<'a> I2cBus<'a> {
-    fn i2c_start(&self, mut cmd: MpsseCmdBuilder, pins: u8) -> MpsseCmdBuilder {
-        for _ in 0..4 {
-            cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b11, 0b1111_1011);
-        }
+fn i2c_read_from(addr: u8) -> u8 {
+    (addr << 1) | 0x1
+}
 
-        for _ in 0..4 {
-            cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b01, 0b1111_1011);
-        }
-
-        for _ in 0..4 {
-            cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b00, 0b1111_1011);
-        }
-
-        cmd
+fn i2c_start(mut cmd: MpsseCmdBuilder, pins: u8) -> MpsseCmdBuilder {
+    for _ in 0..4 {
+        cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b11, 0b1111_1011);
     }
 
-    fn i2c_stop(&self, mut cmd: MpsseCmdBuilder, pins: u8) -> MpsseCmdBuilder {
-        for _ in 0..4 {
-            cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b01, 0b1111_1011);
-        }
-
-        for _ in 0..4 {
-            cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b11, 0b1111_1011);
-        }
-
-        for _ in 0..4 {
-            cmd = cmd.set_gpio_lower((pins & 0b1111_1100) | 0b00, 0b1111_1000);
-        }
-
-        cmd
+    for _ in 0..4 {
+        cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b01, 0b1111_1011);
     }
 
-    fn i2c_write_byte_ack(&self, cmd: MpsseCmdBuilder, byte: u8, pins: u8) -> MpsseCmdBuilder {
-        cmd
-            // make sure no occasional SP: SDA output(1) SCL output(0)
-            .set_gpio_lower((pins & 0b1111_1000) | 0b10, 0b1111_1011)
-            // send single byte using MPSSE
-            .clock_data_out(ClockDataOut::MsbNeg, &[byte])
-            // get pins ready for SAK: DO input, DI input, SK output(0)
-            .set_gpio_lower((pins & 0b1111_1000) | 0b00, 0b1111_1001)
-            // SAK: recv using MPSSE
-            .clock_bits_in(ClockBitsIn::MsbPos, 1)
-            // request immediate response from FTDI to host
-            .send_immediate()
+    for _ in 0..4 {
+        cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b00, 0b1111_1011);
     }
 
-    fn i2c_read_byte(&self, cmd: MpsseCmdBuilder, nack: bool, pins: u8) -> MpsseCmdBuilder {
-        let state = if nack {
-            (pins & 0b1111_1000) | 0b10
-        } else {
-            (pins & 0b1111_1000) | 0b00
-        };
+    cmd
+}
 
-        cmd
-            // make sure no occasional SP: SDA output(1), SCL output(0)
-            .set_gpio_lower((pins & 0b1111_1000) | 0b10, 0b1111_1011)
-            // prepare to read: SDA input, SCL output(0)
-            .set_gpio_lower((pins & 0b1111_1000) | 0b00, 0b1111_1001)
-            // read byte using MPSSE
-            .clock_data_in(ClockDataIn::MsbNeg, 1)
-            // prepare SDA for NACK/ACK
-            .set_gpio_lower(state, 0b1111_1011)
-            // NACK/ACK to slave: we pretend we read it
-            .clock_bits_in(ClockBitsIn::MsbPos, 1)
-            // request immediate response from FTDI to PC
-            .send_immediate()
+fn i2c_stop(mut cmd: MpsseCmdBuilder, pins: u8) -> MpsseCmdBuilder {
+    for _ in 0..4 {
+        cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b01, 0b1111_1011);
     }
+
+    for _ in 0..4 {
+        cmd = cmd.set_gpio_lower((pins & 0b1111_1000) | 0b11, 0b1111_1011);
+    }
+
+    for _ in 0..4 {
+        cmd = cmd.set_gpio_lower((pins & 0b1111_1100) | 0b00, 0b1111_1000);
+    }
+
+    cmd
+}
+
+fn i2c_write_byte_ack(cmd: MpsseCmdBuilder, byte: u8, pins: u8) -> MpsseCmdBuilder {
+    cmd
+        // make sure no occasional SP: SDA output(1) SCL output(0)
+        .set_gpio_lower((pins & 0b1111_1000) | 0b10, 0b1111_1011)
+        // send single byte using MPSSE
+        .clock_data_out(ClockDataOut::MsbNeg, &[byte])
+        // get pins ready for SAK: DO input, DI input, SK output(0)
+        .set_gpio_lower((pins & 0b1111_1000) | 0b00, 0b1111_1001)
+        // SAK: recv using MPSSE
+        .clock_bits_in(ClockBitsIn::MsbPos, 1)
+        // request immediate response from FTDI to host
+        .send_immediate()
+}
+
+fn i2c_read_byte(cmd: MpsseCmdBuilder, nack: bool, pins: u8) -> MpsseCmdBuilder {
+    let state = if nack {
+        (pins & 0b1111_1000) | 0b10
+    } else {
+        (pins & 0b1111_1000) | 0b00
+    };
+
+    cmd
+        // make sure no occasional SP: SDA output(1), SCL output(0)
+        .set_gpio_lower((pins & 0b1111_1000) | 0b10, 0b1111_1011)
+        // prepare to read: SDA input, SCL output(0)
+        .set_gpio_lower((pins & 0b1111_1000) | 0b00, 0b1111_1001)
+        // read byte using MPSSE
+        .clock_data_in(ClockDataIn::MsbNeg, 1)
+        // prepare SDA for NACK/ACK
+        .set_gpio_lower(state, 0b1111_1011)
+        // NACK/ACK to slave: we pretend we read it
+        .clock_bits_in(ClockBitsIn::MsbPos, 1)
+        // request immediate response from FTDI to PC
+        .send_immediate()
 }
 
 impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
@@ -127,10 +123,10 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
-        cmd = self.i2c_start(cmd, pins[0]);
+        cmd = i2c_start(cmd, pins[0]);
 
         // SAD + R: send using MPSSE
-        cmd = self.i2c_write_byte_ack(cmd, I2cBus::i2c_read_from(address), pins[0]);
+        cmd = i2c_write_byte_ack(cmd, i2c_read_from(address), pins[0]);
 
         // send command and read back one bit
         ftdi.usb_purge_buffers()?;
@@ -148,7 +144,7 @@ impl<'a> embedded_hal::blocking::i2c::Read for I2cBus<'a> {
             let mut data: Vec<u8> = vec![0, 0];
             let nack: bool = i == (buffer.len() - 1);
 
-            cmd = self.i2c_read_byte(cmd, nack, pins[0]);
+            cmd = i2c_read_byte(cmd, nack, pins[0]);
 
             ftdi.usb_purge_buffers()?;
             ftdi.write_all(cmd.as_slice())?;
@@ -191,10 +187,10 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
-        cmd = self.i2c_start(cmd, pins[0]);
+        cmd = i2c_start(cmd, pins[0]);
 
         // SAD + W: send using MPSSE
-        cmd = self.i2c_write_byte_ack(cmd, I2cBus::i2c_write_to(address), pins[0]);
+        cmd = i2c_write_byte_ack(cmd, i2c_write_to(address), pins[0]);
 
         // send command and read back one bit
         ftdi.usb_purge_buffers()?;
@@ -210,7 +206,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         for byte in bytes {
             let mut cmd = MpsseCmdBuilder::new();
 
-            cmd = self.i2c_write_byte_ack(cmd, *byte, pins[0]);
+            cmd = i2c_write_byte_ack(cmd, *byte, pins[0]);
 
             // send command and read back one bit
             ftdi.usb_purge_buffers()?;
@@ -226,7 +222,7 @@ impl<'a> embedded_hal::blocking::i2c::Write for I2cBus<'a> {
         let mut cmd = MpsseCmdBuilder::new();
 
         // SP: send using bit-banging
-        cmd = self.i2c_stop(cmd, pins[0]);
+        cmd = i2c_stop(cmd, pins[0]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(cmd.as_slice())?;
@@ -258,10 +254,10 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         ftdi.read_exact(&mut pins)?;
 
         // ST: send using bit-banging
-        cmd = self.i2c_start(cmd, pins[0]);
+        cmd = i2c_start(cmd, pins[0]);
 
         // SAD + W: send using MPSSE
-        cmd = self.i2c_write_byte_ack(cmd, I2cBus::i2c_write_to(address), pins[0]);
+        cmd = i2c_write_byte_ack(cmd, i2c_write_to(address), pins[0]);
 
         // send command and read back one bit
         ftdi.usb_purge_buffers()?;
@@ -277,7 +273,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         for byte in bytes {
             let mut cmd = MpsseCmdBuilder::new();
 
-            cmd = self.i2c_write_byte_ack(cmd, *byte, pins[0]);
+            cmd = i2c_write_byte_ack(cmd, *byte, pins[0]);
 
             // send command and read back one bit
             ftdi.usb_purge_buffers()?;
@@ -294,10 +290,10 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         let mut ack: Vec<u8> = vec![0];
 
         // SR: send using bit-banging
-        cmd = self.i2c_start(cmd, pins[0]);
+        cmd = i2c_start(cmd, pins[0]);
 
         // SAD + R: send using MPSSE
-        cmd = self.i2c_write_byte_ack(cmd, I2cBus::i2c_read_from(address), pins[0]);
+        cmd = i2c_write_byte_ack(cmd, i2c_read_from(address), pins[0]);
 
         // send command and read back one bit
         ftdi.usb_purge_buffers()?;
@@ -315,7 +311,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
             let mut data: Vec<u8> = vec![0, 0];
             let nack: bool = i == (buffer.len() - 1);
 
-            cmd = self.i2c_read_byte(cmd, nack, pins[0]);
+            cmd = i2c_read_byte(cmd, nack, pins[0]);
 
             ftdi.usb_purge_buffers()?;
             ftdi.write_all(cmd.as_slice())?;
@@ -327,7 +323,7 @@ impl<'a> embedded_hal::blocking::i2c::WriteRead for I2cBus<'a> {
         let mut cmd = MpsseCmdBuilder::new();
 
         // SP: send using bit-banging
-        cmd = self.i2c_stop(cmd, pins[0]);
+        cmd = i2c_stop(cmd, pins[0]);
 
         ftdi.usb_purge_buffers()?;
         ftdi.write_all(cmd.as_slice())?;
