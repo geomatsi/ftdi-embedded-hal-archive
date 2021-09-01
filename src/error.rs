@@ -1,4 +1,5 @@
 use ftdi;
+use libftd2xx;
 use std::fmt;
 use std::io;
 
@@ -9,6 +10,7 @@ pub enum X232Error {
     Io(io::Error),
     FTDI(ftdi::Error),
     HAL(ErrorKind),
+    FTD2XX(libftd2xx::TimeoutError),
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -41,6 +43,7 @@ impl fmt::Display for X232Error {
         match *self {
             X232Error::Io(ref err) => err.fmt(f),
             X232Error::FTDI(ref err) => err.fmt(f),
+            X232Error::FTD2XX(ref err) => err.fmt(f),
             X232Error::HAL(ref err) => write!(f, "A regular error occurred {:?}", err.as_str()),
         }
     }
@@ -54,5 +57,11 @@ impl From<io::Error> for X232Error {
 impl From<ftdi::Error> for X232Error {
     fn from(e: ftdi::Error) -> Self {
         X232Error::FTDI(e)
+    }
+}
+
+impl From<libftd2xx::TimeoutError> for X232Error {
+    fn from(e: libftd2xx::TimeoutError) -> Self {
+        X232Error::FTD2XX(e)
     }
 }
