@@ -45,8 +45,10 @@ where
     X232Error: From<<T as MpsseCmdExecutor>::Error>,
 {
     pub fn init(device: T, frequency: u32) -> Result<FTx232H<T>> {
-        let mut settings: MpsseSettings = MpsseSettings::default();
-        settings.clock_frequency = Some(frequency);
+        let settings: MpsseSettings = MpsseSettings {
+            clock_frequency: Some(frequency),
+            ..Default::default()
+        };
 
         FTx232H::init_full(device, settings)
     }
