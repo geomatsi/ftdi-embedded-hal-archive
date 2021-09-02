@@ -5,7 +5,6 @@ use crate::gpio::PinBank;
 use crate::i2c::I2cBus;
 use crate::spi::SpiBus;
 
-use ftdi_mpsse::MpsseCmd;
 use ftdi_mpsse::MpsseCmdBuilder;
 use ftdi_mpsse::MpsseCmdExecutor;
 use ftdi_mpsse::MpsseSettings;
@@ -56,13 +55,12 @@ where
     pub fn init_full(mut device: T, settings: MpsseSettings) -> Result<FTx232H<T>> {
         device.mpsse_init(&settings)?;
         // Device settings:
-        // - disable DIV_5 => 60MHz
         // - disable adaptive clocking
         // - disable 3-phase clocking
         // - disable loopback
         // - low bits: all outputs(0)
         // FIXME: current approach is limited: fixed in/out pin configuration:
-        let cmd_init = MpsseCmdBuilder::with_vec(vec![MpsseCmd::DisableClockDivide.into()])
+        let cmd_init = MpsseCmdBuilder::new()
             .disable_adaptive_data_clocking()
             .disable_3phase_data_clocking()
             .disable_loopback()
