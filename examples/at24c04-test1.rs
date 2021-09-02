@@ -20,16 +20,10 @@ mod test {
         compile_error!("one of features 'ftdi-lib' and 'ftd2-lib' shall be enabled");
 
         #[cfg(feature = "ftdi-lib")]
-        let device = {
-            let mut d = ftdi::find_by_vid_pid(0x0403, 0x6014)
-                .interface(ftdi::Interface::A)
-                .open()
-                .unwrap();
-
-            // TODO: set clocks in mpsse_init
-            d.set_mpsse_clock(ftdi::MpsseClock::CLK_400kHz).unwrap();
-            d
-        };
+        let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
 
         #[cfg(feature = "ftd2-lib")]
         let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
@@ -59,16 +53,10 @@ mod test {
         compile_error!("one of features 'ftdi-lib' and 'ftd2-lib' shall be enabled");
 
         #[cfg(feature = "ftdi-lib")]
-        let device = {
-            let mut d = ftdi::find_by_vid_pid(0x0403, 0x6014)
-                .interface(ftdi::Interface::A)
-                .open()
-                .unwrap();
-
-            // TODO: set clocks in mpsse_init
-            d.set_mpsse_clock(ftdi::MpsseClock::CLK_400kHz).unwrap();
-            d
-        };
+        let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
 
         #[cfg(feature = "ftd2-lib")]
         let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
@@ -102,16 +90,10 @@ mod test {
         compile_error!("one of features 'ftdi-lib' and 'ftd2-lib' shall be enabled");
 
         #[cfg(feature = "ftdi-lib")]
-        let device = {
-            let mut d = ftdi::find_by_vid_pid(0x0403, 0x6014)
-                .interface(ftdi::Interface::A)
-                .open()
-                .unwrap();
-
-            // TODO: set clocks in mpsse_init
-            d.set_mpsse_clock(ftdi::MpsseClock::CLK_400kHz).unwrap();
-            d
-        };
+        let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
 
         #[cfg(feature = "ftd2-lib")]
         let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
@@ -143,16 +125,10 @@ mod test {
         compile_error!("one of features 'ftdi-lib' and 'ftd2-lib' shall be enabled");
 
         #[cfg(feature = "ftdi-lib")]
-        let device = {
-            let mut d = ftdi::find_by_vid_pid(0x0403, 0x6014)
-                .interface(ftdi::Interface::A)
-                .open()
-                .unwrap();
-
-            // TODO: set clocks in mpsse_init
-            d.set_mpsse_clock(ftdi::MpsseClock::CLK_400kHz).unwrap();
-            d
-        };
+        let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
 
         #[cfg(feature = "ftd2-lib")]
         let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
@@ -183,16 +159,10 @@ mod test {
         compile_error!("one of features 'ftdi-lib' and 'ftd2-lib' shall be enabled");
 
         #[cfg(feature = "ftdi-lib")]
-        let device = {
-            let mut d = ftdi::find_by_vid_pid(0x0403, 0x6014)
-                .interface(ftdi::Interface::A)
-                .open()
-                .unwrap();
-
-            // TODO: set clocks in mpsse_init
-            d.set_mpsse_clock(ftdi::MpsseClock::CLK_400kHz).unwrap();
-            d
-        };
+        let device = ftdi::find_by_vid_pid(0x0403, 0x6014)
+            .interface(ftdi::Interface::A)
+            .open()
+            .unwrap();
 
         #[cfg(feature = "ftd2-lib")]
         let device = libftd2xx::Ft232h::with_description("Single RS232-HS").unwrap();
