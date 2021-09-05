@@ -189,7 +189,7 @@ where
             Err(poisoned) => poisoned.into_inner(),
         };
 
-        //let mut ftdi = lock.borrow_mut();
-        //ftdi.usb_purge_buffers().unwrap();
+        let mut ftdi = lock.borrow_mut();
+        ftdi.mpsse_close();
     }
 }
