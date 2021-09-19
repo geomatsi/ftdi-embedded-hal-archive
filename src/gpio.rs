@@ -91,7 +91,7 @@ where
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.mpsse_xfer(read.as_slice(), &mut value)?;
+        ftdi.xfer(read.as_slice(), &mut value)?;
 
         let v = if val {
             value[0] | (1 << self.bit)
@@ -108,7 +108,7 @@ where
                 .send_immediate(),
         };
 
-        ftdi.mpsse_send(write.as_slice())?;
+        ftdi.send(write.as_slice())?;
 
         Ok(())
     }

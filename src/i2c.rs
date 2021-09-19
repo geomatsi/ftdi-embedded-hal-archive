@@ -121,7 +121,7 @@ where
         let mut ack: Vec<u8> = vec![0];
 
         // get current state of low pins
-        ftdi.mpsse_xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
+        ftdi.xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
 
         // ST: send using bit-banging
         cmd = i2c_start(cmd, pins[0]);
@@ -130,7 +130,7 @@ where
         cmd = i2c_write_byte_ack(cmd, i2c_read_from(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
+        ftdi.xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -145,7 +145,7 @@ where
 
             cmd = i2c_read_byte(cmd, nack, pins[0]);
 
-            ftdi.mpsse_xfer(cmd.as_slice(), &mut data)?;
+            ftdi.xfer(cmd.as_slice(), &mut data)?;
 
             buffer[i] = data[0];
         }
@@ -155,7 +155,7 @@ where
         // SP: send using bit-banging
         cmd = i2c_stop(cmd, pins[0]);
 
-        ftdi.mpsse_send(cmd.as_slice())?;
+        ftdi.send(cmd.as_slice())?;
 
         Ok(())
     }
@@ -182,7 +182,7 @@ where
         let mut ack: Vec<u8> = vec![0];
 
         // get current state of low pins
-        ftdi.mpsse_xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
+        ftdi.xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
 
         // ST: send using bit-banging
         cmd = i2c_start(cmd, pins[0]);
@@ -191,7 +191,7 @@ where
         cmd = i2c_write_byte_ack(cmd, i2c_write_to(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
+        ftdi.xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -205,7 +205,7 @@ where
             cmd = i2c_write_byte_ack(cmd, *byte, pins[0]);
 
             // send command and read back one bit
-            ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
+            ftdi.xfer(cmd.as_slice(), &mut ack)?;
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
@@ -218,7 +218,7 @@ where
         // SP: send using bit-banging
         cmd = i2c_stop(cmd, pins[0]);
 
-        ftdi.mpsse_send(cmd.as_slice())?;
+        ftdi.send(cmd.as_slice())?;
 
         Ok(())
     }
@@ -246,7 +246,7 @@ where
         let mut ack: Vec<u8> = vec![0];
 
         // get current state of low pins
-        ftdi.mpsse_xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
+        ftdi.xfer(cmd_read_low_pins.as_slice(), &mut pins)?;
 
         // ST: send using bit-banging
         cmd = i2c_start(cmd, pins[0]);
@@ -255,7 +255,7 @@ where
         cmd = i2c_write_byte_ack(cmd, i2c_write_to(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
+        ftdi.xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -269,7 +269,7 @@ where
             cmd = i2c_write_byte_ack(cmd, *byte, pins[0]);
 
             // send command and read back one bit
-            ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
+            ftdi.xfer(cmd.as_slice(), &mut ack)?;
 
             // check ACK bit from slave
             if ack[0] & 0x1 == 0x1 {
@@ -287,7 +287,7 @@ where
         cmd = i2c_write_byte_ack(cmd, i2c_read_from(address), pins[0]);
 
         // send command and read back one bit
-        ftdi.mpsse_xfer(cmd.as_slice(), &mut ack)?;
+        ftdi.xfer(cmd.as_slice(), &mut ack)?;
 
         // check ACK bit from slave
         if ack[0] & 0x1 == 0x1 {
@@ -302,7 +302,7 @@ where
 
             cmd = i2c_read_byte(cmd, nack, pins[0]);
 
-            ftdi.mpsse_xfer(cmd.as_slice(), &mut data)?;
+            ftdi.xfer(cmd.as_slice(), &mut data)?;
 
             buffer[i] = data[0];
         }
@@ -312,7 +312,7 @@ where
         // SP: send using bit-banging
         cmd = i2c_stop(cmd, pins[0]);
 
-        ftdi.mpsse_send(cmd.as_slice())?;
+        ftdi.send(cmd.as_slice())?;
 
         Ok(())
     }

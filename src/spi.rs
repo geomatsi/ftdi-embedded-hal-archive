@@ -82,7 +82,7 @@ where
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.mpsse_xfer(cmd.as_slice(), buffer)?;
+        ftdi.xfer(cmd.as_slice(), buffer)?;
 
         Ok(buffer)
     }
@@ -107,7 +107,7 @@ where
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.mpsse_send(cmd.as_slice())?;
+        ftdi.send(cmd.as_slice())?;
 
         Ok(())
     }
@@ -130,7 +130,7 @@ where
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        match ftdi.mpsse_xfer(cmd.as_slice(), &mut buffer) {
+        match ftdi.xfer(cmd.as_slice(), &mut buffer) {
             Ok(()) => Ok(buffer[0]),
             Err(e) => Err(nb::Error::Other(X232Error::from(e))),
         }
@@ -144,7 +144,7 @@ where
         let lock = self.ctx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        match ftdi.mpsse_send(cmd.as_slice()) {
+        match ftdi.send(cmd.as_slice()) {
             Ok(()) => Ok(()),
             Err(e) => Err(nb::Error::Other(X232Error::from(e))),
         }

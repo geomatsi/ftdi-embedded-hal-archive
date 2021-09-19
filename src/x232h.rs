@@ -53,7 +53,7 @@ where
     }
 
     pub fn init_full(mut device: T, settings: MpsseSettings) -> Result<FTx232H<T>> {
-        device.mpsse_init(&settings)?;
+        device.init(&settings)?;
         // Device settings:
         // - disable adaptive clocking
         // - disable 3-phase clocking
@@ -67,7 +67,7 @@ where
             .set_gpio_lower(0x0, 0b1111_1111)
             .set_gpio_upper(0x0, 0b1111_1111);
 
-        device.mpsse_send(cmd_init.as_slice())?;
+        device.send(cmd_init.as_slice())?;
 
         let d = FTx232H {
             mtx: Mutex::new(RefCell::new(device)),
@@ -106,7 +106,7 @@ where
         let lock = self.mtx.lock().unwrap();
         let mut ftdi = lock.borrow_mut();
 
-        ftdi.mpsse_send(cmd.as_slice())?;
+        ftdi.send(cmd.as_slice())?;
 
         Ok(())
     }
@@ -129,7 +129,7 @@ where
             self.spi.replace(Some(true));
 
             // SPI: DI - input, DO - output(0), SK - output(0)
-            ftdi.mpsse_send(
+            ftdi.send(
                 MpsseCmdBuilder::new()
                     .set_gpio_lower(0x0, 0b1111_1011)
                     .as_slice(),
@@ -151,7 +151,7 @@ where
             self.i2c.replace(Some(true));
 
             // I2C: DI - input, DO - output(0), SK - output(0)
-            ftdi.mpsse_send(
+            ftdi.send(
                 MpsseCmdBuilder::new()
                     .set_gpio_lower(0x0, 0b1111_1011)
                     .as_slice(),
