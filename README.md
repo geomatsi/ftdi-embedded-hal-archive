@@ -1,4 +1,8 @@
-![Rust](https://github.com/geomatsi/ftdi-embedded-hal/workflows/Rust/badge.svg)
+# NOTE
+
+Check new [ftdi-embedded-hal](https://github.com/ftdi-rs/ftdi-embedded-hal) project in the [ftdi-rs](https://github.com/ftdi-rs) organization for the up-to-date implementation of FTDI MPSSE embedded HAL.
+
+---
 
 # `ftdi-embedded-hal`
 Implementation of the [embedded-hal](https://crates.io/crates/embedded-hal) traits for [FTDI chips](https://www.ftdichip.com) supporting [Multi Protocol Synchronous Serial Engine (MPSSE)](https://www.ftdichip.com/Support/SoftwareExamples/MPSSE/LibMPSSE-SPI.htm).
